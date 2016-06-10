@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="" href="">
+    <information>
+        <title>CIRA tool used in FSE paper</title>
+        <vendor>CIRA</vendor>
+        <offline-allowed/>
+    </information>
+    <resources>
+        <!-- Application Resources -->
+        <j2se version="1.8+"
+              href="http://java.sun.com/products/autodl/j2se"/>
+        <jar href="http://www0.cs.ucl.ac.uk/staff/W.Martin/projects/causal_impact_fse/CIRA_tool_v1.jar"
+             main="true" />
+    </resources>
+
+    <security>
+        <all-permissions/>
+    </security>
+
+    <application-desc
+            name="CIRA tool for running Causal Impact Analysis"
+            main-class=
+                    "com.cira.applet.FSEwebstart"
+            width="300"
+            height="300">
+    </application-desc>
+    <update check="background"/>
+</jnlp>

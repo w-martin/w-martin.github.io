@@ -1,0 +1,113 @@
+
+<head>
+	<!--<link rel="stylesheet" href="stylesheets/base.css" type="text/css" media="screen" />
+    	<link rel="stylesheet" href="stylesheets/layout.css" type="text/css" media="screen" />
+        <link rel="stylesheet" href="stylesheets/skeleton.css" type="text/css" media="screen" />-->
+	
+
+    <link rel="stylesheet" href="stylesheets/styles.css">
+    <link rel="stylesheet" href="stylesheets/pygment_trac.css">
+    <script src="javascripts/scale.fix.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Causal Impact Analysis for App Releases in Google Play</title>
+</head>
+
+<body>
+		<!--<div class="three columns sidebar">
+			<nav>
+				<h3 style="padding-top:45px">UCLappA</h3>
+					<ul>
+                        <li><a href="#msr2015">MSR 2015</a></li>
+                        <li><a href="#data">Data</a></li>
+                        <li><a href="#contact">Contact</a></li>
+                    </ul>
+            </nav>
+            &nbsp;
+        </div>-->
+		<div class="wrapper">
+			<header>
+				<h1>Causal Impact Analysis for App Releases in Google Play</h1>
+This page provides access to the tool and data used in the FSE paper "Causal Impact Analysis for App Releases in Google Play"
+			</header>
+			<section>
+<h2 id="tool">Tool</h2>
+			<p>
+Click here to run the Java webstart for CIRA tool v1.0:
+<script src=
+                "https://www.java.com/js/deployJava.js"></script>
+<script>
+        // using JavaScript to get location of JNLP
+        // file relative to HTML page
+        var dir = location.href.substring(0,
+            location.href.lastIndexOf('/')+1);
+        var url = dir + "cira_webstart.jnlp";
+        deployJava.createWebStartLaunchButton(url, '1.8.0');
+    </script>
+Java 1.8+ is required.
+</p>
+
+<p>
+Alternatively you can run the webstart directly from a console:<br> javaws http://www0.cs.ucl.ac.uk/staff/W.Martin/projects/causal_impact_fse/cira_webstart.jnlp<br>
+    Or download the jar here: <a href="CIRA_tool_v1.jar">CIRA_tool_v1.jar</a>.
+</p>
+
+<p>
+The format for target files is:<br>
+line: targetID(integer),priorStartWeek(count from 1),releaseWeek(start of posterior),posteriorEndWeek,[comma separated list of floats for the vector]<br>
+Each target goes on a new line.<br>
+Download the sample target file here: <a href="targets.csv">targets.csv</a>
+</p>
+
+<p>
+The format for control files is:<br>
+line: [comma separated list of floats - week 1 for each control]<br>
+line: [comma separated list of floats - week 2 for each control]<br>
+  |<br>
+  V<br>
+Each control spans every line; each week goes on a new line.<br>
+Download the sample controls file here: <a href="controls.csv">controls.csv</a>
+</p>
+
+<p>Both samples are available in this zip: <a href="ciraSamples.zip">ciraSamples.zip</a> </p>
+			</section>
+      <section>
+<!--
+<h2 id="msr2015" class="remove-bottom" style="margin-top: 40px">The App Sampling Problem for App Store Mining</h2>
+			<hr />
+<p>Many papers on App Store Mining are susceptible to the App Sampling Problem, which exists when only a subset of apps are studied, resulting in potential sampling bias.
+We introduce the App Sampling Problem, and study its effects on sets of user review data.
+We investigate the effects of sampling bias, and techniques for its amelioration in App Store Mining and Analysis, where sampling bias is often unavoidable.
+We mine 106,891 requests from 2,729,103 user reviews and investigate the properties of apps and reviews from 3 different partitions: the sets with fully complete review data, partially complete review data, and no review data at all.
+We find that app metrics such as price, rating, and download rank are significantly different between the three completeness levels.
+We show that correlation analysis can find trends in the data that prevail across the partitions, offering one possible approach to App Store Analysis in the presence of sampling bias.</p>
+-->
+<h2 id="data">Data</h2>
+To request a copy of the time-series google app data used in the FSE study, please fill the following form.
+
+<p>
+<form action="MAILTO:w.martin@ucl.ac.uk?subject=Data Request for FSE 16 data" method="post" enctype="text/plain">
+Name:<br />
+<input type="text" name="name" value="" /><br />
+E-mail:<br />
+<input type="text" name="mail" value="" /><br />
+Affiliation:<br />
+<input type="text" name="affiliation" value="" size="50" />
+<br /><br />
+<input type="submit" value="Send">
+<input type="reset" value="Reset">
+</form>
+
+<h2 id="contact">Contact</h2>
+<p>w.martin (at) ucl.ac.uk</p>
+
+        
+</section>
+</div>
+
+    <footer>
+        <p>2016 &copy; <a href="http://www.cs.ucl.ac.uk/staff/W.Martin/">William Martin</a>
+      <p>Theme by <a href="https://github.com/orderedlist">orderedlist</a></p>
+    </footer>
+
+</body>
+
