@@ -1,0 +1,30 @@
+@import "tailwindcss";
+@plugin "@tailwindcss/typography";
+
+/* Class-based dark mode (toggled via JS in Base.astro), not just OS preference. */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/* Palette/fonts match ~/Programming/cv/cv.tex, so the site and CV read as one brand. */
+@theme {
+  --color-accent: #2079c7;
+  --color-body: #666666;
+  --color-rule: #cccccc;
+  --font-serif: "Merriweather", ui-serif, Georgia, serif;
+  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+}
+
+/* Dark-mode overrides for the same tokens -- every text-accent/text-body/border-rule
+   utility in the site adapts automatically, no per-usage dark: prefixing needed. */
+.dark {
+  --color-accent: #5ba8e5;
+  --color-body: #a3a3a3;
+  --color-rule: #404040;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply font-serif text-body;
+}

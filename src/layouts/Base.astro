@@ -1,0 +1,91 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = "Will Martin: ML engineer, researcher, musician." } = Astro.props;
+
+const nav = [
+  { href: "/#projects", label: "Projects" },
+  { href: "/#music", label: "Music" },
+  { href: "/blog/", label: "Blog" },
+];
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{title} | Will Martin</title>
+    <meta name="description" content={description} />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <link rel="icon" href="/favicon.ico" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Merriweather:wght@400;700&family=Open+Sans:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <script is:inline>
+      // Set theme before paint, to avoid a flash of the wrong theme.
+      (function () {
+        const stored = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        if (stored === "dark" || (!stored && prefersDark)) {
+          document.documentElement.classList.add("dark");
+        }
+      })();
+    </script>
+  </head>
+  <body class="min-h-screen flex flex-col bg-white dark:bg-neutral-950 transition-colors">
+    <header class="border-b border-rule">
+      <nav class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-4 px-4 py-4">
+        <a href="/" class="font-sans font-bold text-black dark:text-white no-underline">Will Martin</a>
+        <div class="flex items-center gap-6">
+          <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm">
+            {nav.map((item) => (
+              <li>
+                <a href={item.href} class="text-body hover:text-accent no-underline">{item.label}</a>
+              </li>
+            ))}
+          </ul>
+          <button
+            id="theme-toggle"
+            type="button"
+            aria-label="Toggle dark mode"
+            class="text-body hover:text-accent"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 dark:hidden">
+              <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.71-.71M6.34 6.34l-.71-.71m12.02 0l-.71.71M6.34 17.66l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 hidden dark:block">
+              <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+            </svg>
+          </button>
+        </div>
+      </nav>
+    </header>
+
+    <main class="max-w-3xl mx-auto w-full px-4 py-10 flex-1">
+      <slot />
+    </main>
+
+    <footer class="border-t border-rule">
+      <p class="max-w-3xl mx-auto px-4 py-6 font-sans text-sm text-body">
+        &copy; {new Date().getFullYear()} Will Martin
+      </p>
+    </footer>
+
+    <script is:inline>
+      document.getElementById("theme-toggle").addEventListener("click", () => {
+        const isDark = document.documentElement.classList.toggle("dark");
+        localStorage.setItem("theme", isDark ? "dark" : "light");
+      });
+    </script>
+  </body>
+</html>
