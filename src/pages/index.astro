@@ -1,11 +1,11 @@
 ---
 import Base from "../layouts/Base.astro";
 import { Image } from "astro:assets";
-import { getCollection } from "astro:content";
+import { getCollection, render } from "astro:content";
 import flightArt from "../assets/music/flight-of-the-white-dragon.jpg";
 import ladderArt from "../assets/music/the-ladder.jpg";
 
-const projects = [
+const software = [
   {
     name: "typedframes",
     blurb:
@@ -13,6 +13,7 @@ const projects = [
     links: [
       { label: "GitHub", href: "https://github.com/w-martin/typedframes" },
       { label: "PyPI", href: "https://pypi.org/project/typedframes/" },
+      { label: "Blog post", href: "#post-why-i-built-typedframes" },
     ],
   },
   {
@@ -26,9 +27,12 @@ const projects = [
   },
 ];
 
-const recentPosts = (await getCollection("blog"))
-  .sort((a, b) => b.data.date.valueOf() - a.data.date.valueOf())
-  .slice(0, 3);
+const sortedPosts = (await getCollection("blog")).sort(
+  (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
+);
+const posts = await Promise.all(
+  sortedPosts.map(async (post) => ({ post, Content: (await render(post)).Content }))
+);
 ---
 
 <Base title="Home">
@@ -46,11 +50,11 @@ const recentPosts = (await getCollection("blog"))
     <li><a href="https://pypi.org/user/will-martin" class="text-body hover:text-accent">PyPI</a></li>
   </ul>
 
-  <section id="projects" class="scroll-mt-8 mb-16">
-    <h2 class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule">Projects</h2>
-    <p class="mb-6">Independent research and open-source tooling in Rust and Python.</p>
+  <details id="software" class="scroll-mt-8 mb-16" open>
+    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Software</summary>
+    <p class="mb-6 mt-4">Independent research and open-source tooling in Rust and Python.</p>
     <div class="flex flex-col gap-8">
-      {projects.map((p) => (
+      {software.map((p) => (
         <article>
           <h3 class="font-sans text-lg font-bold text-black dark:text-white mb-2">{p.name}</h3>
           <p class="mb-3">{p.blurb}</p>
@@ -62,11 +66,11 @@ const recentPosts = (await getCollection("blog"))
         </article>
       ))}
     </div>
-  </section>
+  </details>
 
-  <section id="music" class="scroll-mt-8 mb-16">
-    <h2 class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule">Music</h2>
-    <p class="mb-4">
+  <details id="music" class="scroll-mt-8 mb-16" open>
+    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Music</summary>
+    <p class="mb-4 mt-4">
       Away from the keyboard, I write and record instrumental guitar music, self-released.
     </p>
 
@@ -83,65 +87,160 @@ const recentPosts = (await getCollection("blog"))
       >
         Listen on Spotify
       </a>
+      <a
+        href="https://music.youtube.com/@will_martin"
+        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
+      >
+        Listen on YouTube Music
+      </a>
+      <a
+        href="https://music.apple.com/gb/artist/will-martin/1571585762"
+        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
+      >
+        Listen on Apple Music
+      </a>
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-      <article>
-        <Image
-          src={ladderArt}
-          alt="The Ladder cover art"
-          width={500}
-          height={500}
-          class="w-full aspect-square object-cover rounded mb-3"
-        />
-        <p class="font-sans font-bold text-black dark:text-white mb-3">The Ladder</p>
-        <iframe
-          style="border: 0; width: 100%; height: 120px;"
-          src="https://bandcamp.com/EmbeddedPlayer/track=2406607306/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/"
-          seamless
-          title="The Ladder: Bandcamp player"
-        >
-        </iframe>
+      <article class="bandcamp-embed" data-src="https://bandcamp.com/EmbeddedPlayer/track=2406607306/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/" data-title="The Ladder: Bandcamp player">
+        <div class="relative group">
+          <Image
+            src={ladderArt}
+            alt="The Ladder cover art"
+            width={500}
+            height={500}
+            class="w-full aspect-square object-cover rounded mb-3"
+          />
+          <button
+            type="button"
+            class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
+            aria-label="Play The Ladder on Bandcamp"
+          >
+            <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            </span>
+          </button>
+        </div>
+        <p class="font-sans font-bold text-black dark:text-white">The Ladder</p>
       </article>
 
-      <article>
-        <Image
-          src={flightArt}
-          alt="Flight of the White Dragon cover art"
-          width={500}
-          height={500}
-          class="w-full aspect-square object-cover rounded mb-3"
-        />
-        <p class="font-sans font-bold text-black dark:text-white mb-3">Flight of the White Dragon</p>
-        <iframe
-          style="border: 0; width: 100%; height: 120px;"
-          src="https://bandcamp.com/EmbeddedPlayer/track=580727493/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/"
-          seamless
-          title="Flight of the White Dragon: Bandcamp player"
-        >
-        </iframe>
+      <article class="bandcamp-embed" data-src="https://bandcamp.com/EmbeddedPlayer/track=580727493/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/" data-title="Flight of the White Dragon: Bandcamp player">
+        <div class="relative group">
+          <Image
+            src={flightArt}
+            alt="Flight of the White Dragon cover art"
+            width={500}
+            height={500}
+            class="w-full aspect-square object-cover rounded mb-3"
+          />
+          <button
+            type="button"
+            class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
+            aria-label="Play Flight of the White Dragon on Bandcamp"
+          >
+            <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+              <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+            </span>
+          </button>
+        </div>
+        <p class="font-sans font-bold text-black dark:text-white">Flight of the White Dragon</p>
       </article>
     </div>
-  </section>
 
-  <section id="writing" class="scroll-mt-8">
-    <h2 class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule">Writing</h2>
-    {recentPosts.length === 0 ? (
-      <p>Nothing published yet. Check back soon.</p>
+    <div
+      id="bandcamp-player"
+      class="mx-auto mt-6 h-[120px] max-w-md rounded border border-rule"
+    >
+      <p class="text-sm text-body text-center leading-[118px]">Select a track above to play</p>
+    </div>
+  </details>
+
+  <script>
+    const player = document.getElementById("bandcamp-player");
+    const nowPlaying = document.getElementById("now-playing");
+    const nowPlayingTitle = document.getElementById("now-playing-title");
+
+    document.querySelectorAll<HTMLElement>(".bandcamp-embed").forEach((article) => {
+      const trigger = article.querySelector<HTMLButtonElement>(".bandcamp-trigger");
+      if (!trigger || !player) return;
+
+      trigger.addEventListener("click", () => {
+        const iframe = document.createElement("iframe");
+        iframe.style.display = "block";
+        iframe.style.border = "0";
+        iframe.style.width = "100%";
+        iframe.style.height = "100%";
+        iframe.src = article.dataset.src ?? "";
+        iframe.title = article.dataset.title ?? "Bandcamp player";
+        iframe.allow = "autoplay";
+
+        player.replaceChildren(iframe);
+
+        if (nowPlaying && nowPlayingTitle) {
+          const article2 = article.querySelector("p");
+          nowPlayingTitle.textContent = article2?.textContent ?? "Now playing";
+          nowPlaying.classList.remove("hidden");
+          nowPlaying.classList.add("flex");
+        }
+      });
+    });
+
+    // Don't rely on the browser's native "auto-open ancestor <details>" on
+    // fragment navigation — unreliable here since a post is nested two
+    // levels deep (inside the Blog section's own <details>). Handle it
+    // explicitly: open every ancestor <details> up the chain, then scroll.
+    function openTargetDetails() {
+      const hash = window.location.hash;
+      if (!hash) return;
+      const target = document.querySelector(hash);
+      if (!target) return;
+      let el: Element | null = target;
+      while (el) {
+        if (el.tagName === "DETAILS") (el as HTMLDetailsElement).open = true;
+        el = el.parentElement;
+      }
+      target.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+    window.addEventListener("hashchange", openTargetDetails);
+    openTargetDetails();
+  </script>
+
+  <details id="blog" class="scroll-mt-8" open>
+    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Blog</summary>
+    {posts.length === 0 ? (
+      <p class="mt-4">Nothing published yet. Check back soon.</p>
     ) : (
-      <ul class="flex flex-col gap-4 mt-4">
-        {recentPosts.map((post) => (
-          <li>
-            <a href={`/blog/${post.id}/`} class="font-sans font-bold text-black dark:text-white hover:text-accent">
-              {post.data.title}
-            </a>
-            <p class="font-sans text-sm text-body">
-              {post.data.date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
-            </p>
-          </li>
+      <div class="flex flex-col gap-4 mt-4">
+        {posts.map(({ post, Content }) => (
+          <details id={`post-${post.id}`} class="group scroll-mt-8 border-b border-rule pb-4 last:border-0">
+            <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start justify-between gap-4 -mx-3 px-3 py-3 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.06] transition-colors">
+              <div>
+                <span class="font-sans font-bold text-black dark:text-white">{post.data.title}</span>
+                <p class="font-sans text-sm text-body mt-1">
+                  {post.data.date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
+                </p>
+                {post.data.description && (
+                  <p class="text-sm text-body mt-2 group-open:hidden">{post.data.description}</p>
+                )}
+              </div>
+              <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-white dark:bg-neutral-900">
+                <div class="thumb-content absolute top-0 left-0 w-[500px] origin-top-left scale-[0.128] pointer-events-none select-none prose prose-neutral dark:prose-invert prose-sm max-w-none">
+                  <Content />
+                </div>
+              </div>
+              <svg
+                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                class="w-5 h-5 flex-shrink-0 mt-1 text-body transition-transform duration-200 group-open:rotate-180"
+              >
+                <path d="M6 9l6 6 6-6" />
+              </svg>
+            </summary>
+            <div class="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-sans prose-a:text-accent mt-4 px-3">
+              <Content />
+            </div>
+          </details>
         ))}
-      </ul>
+      </div>
     )}
-    <p class="mt-6"><a href="/blog/" class="text-accent font-sans text-sm">All posts</a></p>
-  </section>
+  </details>
 </Base>

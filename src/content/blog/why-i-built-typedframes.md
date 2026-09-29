@@ -4,6 +4,8 @@ date: 2026-06-06
 description: Weakly typed column references have been a pet peeve for most of a decade. Here's the gap in current tooling, and how typedframes closes it.
 ---
 
+**Repo:** [github.com/w-martin/typedframes](https://github.com/w-martin/typedframes)
+
 I built a static type checker (both a standalone Rust binary and a mypy plugin) to catch
 dataframe schema errors before they hit production. Here is why I built it, the gap in
 current tooling, and how it works. For code examples, skip to the end.
@@ -63,7 +65,8 @@ def process(df: Annotated[pd.DataFrame, OrderSchema]) -> pd.Series:
 The schema encodes hard expectations against every subscript, closer in spirit to a DTO
 than to a runtime validator, and what I want LLMs writing against.
 
-typedframes is available on pypi. There is a standalone rust checker running
+typedframes is available on [PyPI](https://pypi.org/project/typedframes/) and
+[GitHub](https://github.com/w-martin/typedframes). There is a standalone rust checker running
 sub-second, as well as a mypy plugin. I would rather ty or pyrefly built this natively;
 I am not a type system author and the implementation has rough edges. However, this is a
 proof of concept demonstrating that the gap is real and closeable.
