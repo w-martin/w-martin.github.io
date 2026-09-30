@@ -213,8 +213,8 @@ const posts = await Promise.all(
       <div class="flex flex-col gap-4 mt-4">
         {posts.map(({ post, Content }) => (
           <details id={`post-${post.id}`} class="group scroll-mt-8 border-b border-rule pb-4 last:border-0">
-            <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start justify-between gap-4 -mx-3 px-3 py-3 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.06] transition-colors">
-              <div>
+            <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start gap-4 -mx-3 px-3 py-3 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.06] transition-colors">
+              <div class="flex-1 min-w-0">
                 <span class="font-sans font-bold text-black dark:text-white">{post.data.title}</span>
                 <p class="font-sans text-sm text-body mt-1">
                   {post.data.date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
@@ -223,17 +223,19 @@ const posts = await Promise.all(
                   <p class="text-sm text-body mt-2 group-open:hidden">{post.data.description}</p>
                 )}
               </div>
-              <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-white dark:bg-neutral-900">
-                <div class="thumb-content absolute top-0 left-0 w-[500px] origin-top-left scale-[0.128] pointer-events-none select-none prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                  <Content />
+              <div class="flex items-center gap-2 flex-shrink-0">
+                <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-white dark:bg-neutral-900">
+                  <div class="thumb-content absolute top-0 left-0 w-[500px] origin-top-left scale-[0.128] pointer-events-none select-none prose prose-neutral dark:prose-invert prose-sm max-w-none">
+                    <Content />
+                  </div>
                 </div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
+                  class="w-5 h-5 flex-shrink-0 text-body transition-transform duration-200 group-open:rotate-180"
+                >
+                  <path d="M6 9l6 6 6-6" />
+                </svg>
               </div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
-                class="w-5 h-5 flex-shrink-0 mt-1 text-body transition-transform duration-200 group-open:rotate-180"
-              >
-                <path d="M6 9l6 6 6-6" />
-              </svg>
             </summary>
             <div class="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-sans prose-a:text-accent mt-4 px-3">
               <Content />
