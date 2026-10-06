@@ -32,6 +32,7 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
     <title>{title} | Will Martin</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.ico" sizes="any" />
@@ -58,27 +59,27 @@ const nav = [
   </head>
   <body class="min-h-screen flex flex-col bg-white dark:bg-neutral-950 transition-colors">
     <header id="site-header" class="sticky top-0 z-10 border-b border-rule bg-white/90 dark:bg-neutral-950/90 backdrop-blur transition-colors duration-300">
-      <nav id="site-nav" class="max-w-3xl mx-auto flex flex-wrap items-center justify-between gap-4 px-4 py-4 transition-[padding] duration-300">
-        <a href="/" class="font-sans font-bold text-black dark:text-white no-underline">Will Martin</a>
+      <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
+        <a href="/" class="font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
         <a
           id="now-playing"
           href="#bandcamp-player"
-          class="hidden items-center gap-1.5 text-sm text-body hover:text-accent no-underline min-w-0"
+          class="hidden items-center gap-1.5 text-sm text-body hover:text-accent no-underline min-w-0 flex-1"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 flex-shrink-0">
             <path d="M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z" />
           </svg>
-          <span id="now-playing-title" class="truncate max-w-[260px] sm:max-w-none"></span>
+          <span id="now-playing-title" class="truncate"></span>
         </a>
-        <div class="flex items-center gap-6">
-          <ul id="nav-links" class="flex flex-wrap items-center gap-x-6 gap-y-2 font-sans text-sm">
+        <div class="flex items-center gap-4 sm:gap-6 shrink-0">
+          <ul id="nav-links" class="flex items-center gap-x-4 sm:gap-x-6 font-sans text-sm">
             {nav.map((item) => (
               <li>
-                <a href={item.href} class="nav-link text-body hover:text-accent no-underline flex items-center gap-1.5" aria-label={item.label}>
+                <a href={item.href} class="nav-link text-body hover:text-accent no-underline flex items-center gap-1.5 p-2 -m-2" aria-label={item.label}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0">
                     <path d={item.icon} />
                   </svg>
-                  <span class="nav-label transition-[width,opacity] duration-300 overflow-hidden whitespace-nowrap">{item.label}</span>
+                  <span class="nav-label max-sm:hidden transition-[width,opacity] duration-300 overflow-hidden whitespace-nowrap">{item.label}</span>
                 </a>
               </li>
             ))}
@@ -118,15 +119,23 @@ const nav = [
 
       // Compact the header on scroll: shrink padding, collapse nav labels
       // down to icon-only (navigation stays available, just smaller), and
-      // thin the background so it stops blocking the read.
+      // thin the background so it stops blocking the read. Skipped on phones:
+      // labels are always hidden there, and any height change would shift the
+      // scroll position back across the threshold and make the header flicker.
       const siteNav = document.getElementById("site-nav");
       const navLabels = document.querySelectorAll(".nav-label");
       const siteHeader = document.getElementById("site-header");
       const onScroll = () => {
         const scrolled = window.scrollY > 24;
-        siteNav.classList.toggle("py-4", !scrolled);
-        siteNav.classList.toggle("py-2", scrolled);
+        const compactable = window.matchMedia("(min-width: 40rem)").matches;
+        siteNav.classList.toggle("py-4", !(scrolled && compactable));
+        siteNav.classList.toggle("py-2", scrolled && compactable);
         navLabels.forEach((el) => {
+          if (!compactable) {
+            el.style.width = "";
+            el.style.opacity = "";
+            return;
+          }
           el.style.width = scrolled ? "0px" : el.scrollWidth + "px";
           el.style.opacity = scrolled ? "0" : "1";
         });
@@ -136,6 +145,7 @@ const nav = [
         siteHeader.classList.toggle("dark:bg-neutral-950/40", scrolled);
       };
       window.addEventListener("scroll", onScroll, { passive: true });
+      window.addEventListener("resize", onScroll);
       onScroll();
     </script>
   </body>

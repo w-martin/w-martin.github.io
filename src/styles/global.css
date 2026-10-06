@@ -21,8 +21,15 @@
   --color-rule: #404040;
 }
 
+/* Declares which scheme the page renders in so Samsung Internet / Chrome forced
+   dark mode leaves our own backgrounds alone. */
 html {
   scroll-behavior: smooth;
+  color-scheme: light;
+}
+
+html.dark {
+  color-scheme: dark;
 }
 
 body {
