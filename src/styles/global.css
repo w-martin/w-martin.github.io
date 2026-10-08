@@ -4,13 +4,59 @@
 /* Class-based dark mode (toggled via JS in Base.astro), not just OS preference. */
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Self-hosted, Latin-only builds from tools/fonts (SIL OFL; notices in public/fonts). Merriweather
+   ships as two static weights so a weight is only downloaded when text uses it. */
+@font-face {
+  font-family: "Merriweather";
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/merriweather-400.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Merriweather";
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/merriweather-700.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "Open Sans";
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  src: url("../assets/fonts/opensans-variable.woff2") format("woff2");
+}
+
+/* Local fallbacks sized to the web fonts (tools/fonts/fallback_metrics.py), so text doesn't
+   reflow when the real font arrives. */
+@font-face {
+  font-family: "Merriweather Fallback";
+  src: local("Georgia");
+  size-adjust: 109.42%;
+  ascent-override: 89.93%;
+  descent-override: 24.95%;
+  line-gap-override: 0%;
+}
+
+@font-face {
+  font-family: "Open Sans Fallback";
+  src: local("Arial");
+  size-adjust: 105.78%;
+  ascent-override: 101.04%;
+  descent-override: 27.7%;
+  line-gap-override: 0%;
+}
+
 /* Palette/fonts match ~/Programming/cv/cv.tex, so the site and CV read as one brand. */
 @theme {
   --color-accent: #2079c7;
   --color-body: #666666;
   --color-rule: #cccccc;
-  --font-serif: "Merriweather", ui-serif, Georgia, serif;
-  --font-sans: "Open Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Merriweather", "Merriweather Fallback", ui-serif, Georgia, serif;
+  --font-sans: "Open Sans", "Open Sans Fallback", ui-sans-serif, system-ui, sans-serif;
 }
 
 /* Dark-mode overrides for the same tokens -- every text-accent/text-body/border-rule
@@ -23,15 +69,85 @@
 
 /* Declares which scheme the page renders in so Samsung Internet / Chrome forced
    dark mode leaves our own backgrounds alone. */
+/* A closed post would still make the browser fetch fonts (Merriweather Bold, for <strong>) for
+   text nobody can see. Opening it flips [open], so the body renders and loads them then. */
+details:not([open]) > .prose {
+  display: none;
+}
+
 html {
   scroll-behavior: smooth;
   color-scheme: light;
+  background-color: #fff;
 }
 
 html.dark {
   color-scheme: dark;
+  background-color: var(--color-neutral-950);
 }
 
 body {
   @apply font-serif text-body;
+}
+
+.glint-sweep {
+  opacity: 0;
+  mix-blend-mode: screen;
+  background: linear-gradient(110deg, transparent 38%, rgba(255, 255, 255, 0.95) 50%, transparent 62%) 130% 0 / 260% 100%
+    no-repeat;
+  -webkit-mask-size: 100% 100%;
+  mask-size: 100% 100%;
+}
+
+/* Four-point sparkle: a soft core plus two thin crossing streaks. */
+.glint-spot {
+  position: absolute;
+  width: 6%;
+  aspect-ratio: 1;
+  opacity: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  transform: translate(-50%, -50%);
+  background:
+    radial-gradient(circle, #fff 0 9%, rgba(255, 255, 255, 0) 42%),
+    linear-gradient(90deg, transparent 8%, #fff 50%, transparent 92%) center / 100% 7% no-repeat,
+    linear-gradient(0deg, transparent 8%, #fff 50%, transparent 92%) center / 7% 100% no-repeat;
+}
+
+/* Covers fade in over their placeholder once decoded; the play button and effects wait for it.
+   Gated on .js (set before first paint) so nothing stays hidden without scripting. */
+.js .cover-art {
+  opacity: 0;
+  transition: opacity 0.6s ease-out;
+}
+
+.js [data-cover][data-ready] .cover-art {
+  opacity: 1;
+}
+
+.js [data-cover]:not([data-ready]) + .bandcamp-trigger {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.bandcamp-trigger {
+  transition: opacity 0.4s ease-out;
+}
+
+/* No animation while the header settles on first paint (e.g. a restored scroll position). */
+.no-anim,
+.no-anim * {
+  transition: none !important;
+}
+
+/* The 24px placeholder is blurred so the stretch doesn't show blocks; it's hidden once the
+   cover has faded in over it. */
+.cover-ph {
+  transform: scale(1.15);
+  filter: blur(14px);
+}
+
+[data-cover][data-ready] .cover-ph {
+  visibility: hidden;
+  transition: visibility 0s 0.7s;
 }

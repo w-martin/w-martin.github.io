@@ -1,9 +1,40 @@
 ---
 import Base from "../layouts/Base.astro";
-import { Image } from "astro:assets";
+import { Image, Picture } from "astro:assets";
 import { getCollection, render } from "astro:content";
-import flightArt from "../assets/music/flight-of-the-white-dragon.jpg";
+import effects from "../assets/music/layers/effects.json";
 import ladderArt from "../assets/music/the-ladder.jpg";
+import ladderGuitar from "../assets/music/layers/the-ladder-guitar.webp";
+import ladderParticles from "../assets/music/layers/the-ladder-particle-mask.webp";
+import flightArt from "../assets/music/flight-of-the-white-dragon.jpg";
+import flightGuitar from "../assets/music/layers/flight-of-the-white-dragon-guitar.webp";
+import flightBlink from "../assets/music/layers/flight-of-the-white-dragon-blink.webp";
+import flightParticles from "../assets/music/layers/flight-of-the-white-dragon-particle-mask.webp";
+
+// Effect overlays share the cover's coordinates. The particle mask limits embers/snow to the
+// far background, so they never cross the figures, the rocks or the title.
+const covers = [
+  {
+    title: "The Ladder",
+    track: "2406607306",
+    art: ladderArt,
+    particles: { kind: "embers", mask: ladderParticles },
+    guitar: ladderGuitar,
+    glasses: effects["the-ladder"].glasses,
+    placeholder: effects["the-ladder"].placeholder,
+    blink: undefined,
+  },
+  {
+    title: "Flight of the White Dragon",
+    track: "580727493",
+    art: flightArt,
+    particles: { kind: "snow", mask: flightParticles },
+    guitar: flightGuitar,
+    glasses: effects["flight-of-the-white-dragon"].glasses,
+    placeholder: effects["flight-of-the-white-dragon"].placeholder,
+    blink: flightBlink,
+  },
+];
 
 const software = [
   {
@@ -26,6 +57,9 @@ const software = [
     ],
   },
 ];
+
+// Pre-rendered by tools/thumbs/make_thumbs.py (light and dark variant per post).
+const thumbs = import.meta.glob<ImageMetadata>("../assets/thumbs/*.webp", { eager: true, import: "default" });
 
 const sortedPosts = (await getCollection("blog")).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -102,49 +136,68 @@ const posts = await Promise.all(
     </div>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
-      <article class="bandcamp-embed" data-src="https://bandcamp.com/EmbeddedPlayer/track=2406607306/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/" data-title="The Ladder: Bandcamp player">
-        <div class="relative group">
-          <Image
-            src={ladderArt}
-            alt="The Ladder cover art"
-            width={500}
-            height={500}
-            class="w-full aspect-square object-cover rounded mb-3"
-          />
-          <button
-            type="button"
-            class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
-            aria-label="Play The Ladder on Bandcamp"
-          >
-            <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-              <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            </span>
-          </button>
-        </div>
-        <p class="font-sans font-bold text-black dark:text-white">The Ladder</p>
-      </article>
-
-      <article class="bandcamp-embed" data-src="https://bandcamp.com/EmbeddedPlayer/track=580727493/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/" data-title="Flight of the White Dragon: Bandcamp player">
-        <div class="relative group">
-          <Image
-            src={flightArt}
-            alt="Flight of the White Dragon cover art"
-            width={500}
-            height={500}
-            class="w-full aspect-square object-cover rounded mb-3"
-          />
-          <button
-            type="button"
-            class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
-            aria-label="Play Flight of the White Dragon on Bandcamp"
-          >
-            <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-              <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
-            </span>
-          </button>
-        </div>
-        <p class="font-sans font-bold text-black dark:text-white">Flight of the White Dragon</p>
-      </article>
+      {covers.map((cover) => (
+        <article
+          class="bandcamp-embed"
+          data-src={`https://bandcamp.com/EmbeddedPlayer/track=${cover.track}/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/`}
+          data-title={`${cover.title}: Bandcamp player`}
+        >
+          <div class="relative group">
+            <div data-cover class="relative w-full aspect-square overflow-hidden rounded mb-3">
+              <div
+                aria-hidden="true"
+                class="cover-ph absolute inset-0 bg-cover"
+                style={`background-image:url(${cover.placeholder})`}
+              />
+              <Picture
+                src={cover.art}
+                alt={`${cover.title} cover art`}
+                formats={["avif", "webp"]}
+                fallbackFormat="webp"
+                width={1056}
+                height={1056}
+                widths={[352, 704, 1056]}
+                sizes="(min-width: 640px) 352px, calc(100vw - 2rem)"
+                quality={45}
+                class="cover-art absolute inset-0 w-full h-full object-cover"
+              />
+              {cover.blink && (
+                <Image
+                  src={cover.blink}
+                  alt=""
+                  aria-hidden="true"
+                  width={1000}
+                  height={1000}
+                  data-blink
+                  class="absolute inset-0 w-full h-full object-cover pointer-events-none"
+                  style="opacity:0"
+                />
+              )}
+              <div
+                data-glint-sweep
+                class="glint-sweep absolute inset-0 pointer-events-none"
+                style={`-webkit-mask-image:url(${cover.guitar.src});mask-image:url(${cover.guitar.src})`}
+              />
+              <span data-glint-spot class="glint-spot" style={`left:${cover.glasses.x}%;top:${cover.glasses.y}%`} />
+              <canvas
+                data-particles={cover.particles.kind}
+                data-mask={cover.particles.mask.src}
+                class="absolute inset-0 w-full h-full pointer-events-none"
+              />
+            </div>
+            <button
+              type="button"
+              class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
+              aria-label={`Play ${cover.title} on Bandcamp`}
+            >
+              <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              </span>
+            </button>
+          </div>
+          <p class="font-sans font-bold text-black dark:text-white">{cover.title}</p>
+        </article>
+      ))}
     </div>
 
     <div
@@ -203,6 +256,222 @@ const posts = await Promise.all(
     }
     window.addEventListener("hashchange", openTargetDetails);
     openTargetDetails();
+
+    // Cover art: particles, plus blinks and glints on random timers. One rAF loop that only
+    // runs while a cover is on screen.
+    const covers = Array.from(document.querySelectorAll<HTMLElement>("[data-cover]"));
+    const visible = new Set<Element>();
+    // A cover counts as ready once its art has loaded and decoded; until then it shows only the
+    // placeholder, with no particles, glints or play button.
+    const isReady = (cover: Element) => (cover as HTMLElement).dataset.ready !== undefined;
+    const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
+
+    const clamp = (v: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, v));
+    // Slow drift doesn't need 60fps, and 1x pixel ratio is enough for soft particles.
+    const FRAME_MS = 1000 / 30;
+    const MASK_PX = 125;
+
+    // Ember glow is rendered once and stamped per particle, not rebuilt as a gradient each frame.
+    const glow = document.createElement("canvas");
+    glow.width = glow.height = 64;
+    {
+      const g = glow.getContext("2d")!;
+      const grad = g.createRadialGradient(32, 32, 0, 32, 32, 32);
+      grad.addColorStop(0, "rgba(255,210,120,0.9)");
+      grad.addColorStop(0.35, "rgba(255,120,30,0.45)");
+      grad.addColorStop(1, "rgba(255,80,0,0)");
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 64, 64);
+    }
+
+    type Particle = { x: number; y: number; vx: number; vy: number; r: number; phase: number };
+    type Field = { kind: string; items: Particle[]; w: number; h: number; mask: Uint8ClampedArray | null };
+    const fields = new Map<HTMLCanvasElement, Field>();
+    covers.forEach((cover) => {
+      const canvas = cover.querySelector<HTMLCanvasElement>("canvas[data-particles]");
+      if (!canvas) return;
+      const kind = canvas.dataset.particles ?? "snow";
+      const embers = kind === "embers";
+      const items = Array.from({ length: embers ? 28 : 36 }, () => ({
+        x: Math.random(),
+        y: Math.random(),
+        vx: rand(-0.01, 0.015),
+        vy: embers ? -rand(0.03, 0.08) : rand(0.025, 0.06),
+        r: embers ? rand(0.8, 2.2) : rand(0.8, 2.4),
+        phase: rand(0, 6.28),
+      }));
+      const field: Field = { kind, items, w: 0, h: 0, mask: null };
+      fields.set(canvas, field);
+      new ResizeObserver(() => {
+        field.w = canvas.width = Math.round(canvas.clientWidth);
+        field.h = canvas.height = Math.round(canvas.clientHeight);
+      }).observe(canvas);
+
+      // Where particles may show: the alpha of the depth-derived mask, sampled per particle.
+      const img = new Image();
+      img.onload = () => {
+        const c = document.createElement("canvas");
+        c.width = c.height = MASK_PX;
+        const cx = c.getContext("2d", { willReadFrequently: true })!;
+        cx.drawImage(img, 0, 0, MASK_PX, MASK_PX);
+        const px = cx.getImageData(0, 0, MASK_PX, MASK_PX).data;
+        field.mask = new Uint8ClampedArray(MASK_PX * MASK_PX);
+        for (let i = 0; i < field.mask.length; i++) field.mask[i] = px[i * 4 + 3];
+      };
+      img.src = canvas.dataset.mask ?? "";
+    });
+
+    const maskAt = (m: Uint8ClampedArray, x: number, y: number) =>
+      m[clamp(Math.floor(y * MASK_PX), 0, MASK_PX - 1) * MASK_PX + clamp(Math.floor(x * MASK_PX), 0, MASK_PX - 1)] / 255;
+
+    function drawParticles(canvas: HTMLCanvasElement, t: number, dt: number) {
+      const f = fields.get(canvas);
+      const ctx = canvas.getContext("2d");
+      if (!f || !ctx || !f.w || !f.mask) return;
+      const embers = f.kind === "embers";
+      ctx.clearRect(0, 0, f.w, f.h);
+      ctx.globalCompositeOperation = embers ? "lighter" : "source-over";
+      for (const p of f.items) {
+        p.y += p.vy * dt;
+        p.x += (p.vx + Math.sin(t / 1400 + p.phase) * 0.012) * dt;
+        if (p.y < -0.05) p.y = 1.05;
+        if (p.y > 1.05) p.y = -0.05;
+        if (p.x < -0.05) p.x = 1.05;
+        if (p.x > 1.05) p.x = -0.05;
+
+        const rad = p.r * (f.w / 350);
+        const reach = (embers ? rad * 3 : rad) / f.w;
+        // The least permissive of the centre and its four edges, so a glow never spills over a figure.
+        const visibility = Math.min(
+          maskAt(f.mask, p.x, p.y),
+          maskAt(f.mask, p.x - reach, p.y),
+          maskAt(f.mask, p.x + reach, p.y),
+          maskAt(f.mask, p.x, p.y - reach),
+          maskAt(f.mask, p.x, p.y + reach),
+        );
+        if (visibility < 0.02) continue;
+
+        const flicker = embers ? 0.55 + 0.45 * Math.sin(t / 220 + p.phase * 3) : 0.85;
+        const px = p.x * f.w;
+        const py = p.y * f.h;
+        if (embers) {
+          ctx.globalAlpha = flicker * visibility;
+          ctx.drawImage(glow, px - rad * 3, py - rad * 3, rad * 6, rad * 6);
+        } else {
+          ctx.globalAlpha = 0.75 * flicker * visibility;
+          ctx.fillStyle = "#fff";
+          ctx.beginPath();
+          ctx.arc(px, py, rad, 0, 6.283);
+          ctx.fill();
+        }
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    let running = false;
+    let lastDraw = 0;
+    function frame(t: number) {
+      if (document.hidden || visible.size === 0) {
+        running = false;
+        return;
+      }
+      if (t - lastDraw >= FRAME_MS - 2) {
+        const dt = Math.min((t - lastDraw) / 1000, 0.1);
+        lastDraw = t;
+        visible.forEach((cover) => {
+          const canvas = cover.querySelector<HTMLCanvasElement>("canvas[data-particles]");
+          if (canvas && isReady(cover)) drawParticles(canvas, t, dt);
+        });
+      }
+      requestAnimationFrame(frame);
+    }
+    function ensureLoop() {
+      if (running || document.hidden || visible.size === 0) return;
+      running = true;
+      lastDraw = performance.now();
+      requestAnimationFrame(frame);
+    }
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => (e.isIntersecting ? visible.add(e.target) : visible.delete(e.target)));
+        ensureLoop();
+      },
+      { rootMargin: "60px" },
+    );
+    covers.forEach((c) => observer.observe(c));
+    document.addEventListener("visibilitychange", ensureLoop);
+
+    // A cover counts as ready once its art has loaded and decoded; until then it shows only the
+    // placeholder, with no particles, glints or play button.
+    covers.forEach((cover) => {
+      const art = cover.querySelector<HTMLImageElement>("img.cover-art");
+      const ready = () => {
+        cover.setAttribute("data-ready", "");
+        ensureLoop();
+      };
+      if (!art) return ready();
+      const settle = () => (art.decode ? art.decode().then(ready, ready) : ready());
+      if (art.complete && art.naturalWidth) settle();
+      else {
+        art.addEventListener("load", settle, { once: true });
+        art.addEventListener("error", ready, { once: true });
+      }
+    });
+
+    // Random-interval effects; each only fires while its cover is visible and the tab is shown.
+    function every(el: Element, lo: number, hi: number, fire: () => void, first: number) {
+      const cover = el.closest("[data-cover]");
+      const tick = () => {
+        if (cover && visible.has(cover) && isReady(cover) && !document.hidden) fire();
+        setTimeout(tick, rand(lo, hi) * 1000);
+      };
+      setTimeout(tick, first * 1000);
+    }
+
+    document.querySelectorAll<HTMLElement>("[data-blink]").forEach((el) => {
+      const blink = () =>
+        el.animate(
+          [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],
+          { duration: 260, easing: "ease-in-out" },
+        );
+      every(
+        el,
+        9,
+        22,
+        () => {
+          blink();
+          if (Math.random() < 0.15) setTimeout(blink, 380);
+        },
+        rand(4, 8),
+      );
+    });
+
+    document.querySelectorAll<HTMLElement>("[data-glint-spot]").forEach((el) => {
+      const sparkle = () =>
+        el.animate(
+          [
+            { opacity: 0, transform: "translate(-50%,-50%) scale(0.2) rotate(0deg)" },
+            { opacity: 1, transform: "translate(-50%,-50%) scale(1) rotate(25deg)", offset: 0.4 },
+            { opacity: 0, transform: "translate(-50%,-50%) scale(0.3) rotate(60deg)" },
+          ],
+          { duration: 750, easing: "ease-out" },
+        );
+      every(el, 35, 80, sparkle, rand(10, 20));
+    });
+
+    document.querySelectorAll<HTMLElement>("[data-glint-sweep]").forEach((el) => {
+      const sweep = () =>
+        el.animate(
+          [
+            { opacity: 0, backgroundPosition: "130% 0" },
+            { opacity: 1, offset: 0.2 },
+            { opacity: 1, offset: 0.8 },
+            { opacity: 0, backgroundPosition: "-30% 0" },
+          ],
+          { duration: 1100, easing: "ease-in-out" },
+        );
+      every(el, 45, 100, sweep, rand(15, 28));
+    });
   </script>
 
   <details id="blog" class="scroll-mt-8" open>
@@ -225,9 +494,12 @@ const posts = await Promise.all(
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
                 <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-white dark:bg-neutral-900">
-                  <div class="thumb-content absolute top-0 left-0 w-[500px] origin-top-left scale-[0.128] pointer-events-none select-none prose prose-neutral dark:prose-invert prose-sm max-w-none">
-                    <Content />
-                  </div>
+                  {thumbs[`../assets/thumbs/${post.id}-light.webp`] && (
+                    <>
+                      <Image src={thumbs[`../assets/thumbs/${post.id}-light.webp`]} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover dark:hidden" />
+                      <Image src={thumbs[`../assets/thumbs/${post.id}-dark.webp`]} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover hidden dark:block" />
+                    </>
+                  )}
                 </div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"
