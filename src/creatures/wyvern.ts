@@ -96,11 +96,13 @@ export function mountWyvern(box: HTMLElement) {
   // It lives on the page: perched somewhere, and every so often flying to another perch. It never
   // leaves the screen. A perch is the player box's top edge, a cover's top edge, a "Listen on" button
   // or the Music heading's rule, whichever are on screen.
-  const pickPerch = (r: DOMRect) => {
+  const pickPerch = (r: DOMRect, start = false) => {
     // The player box's top edge is the favourite perch. (The dragon lives on the Music section, since
     // loading a song replaces the player's contents.)
     const pr = document.getElementById("bandcamp-player")?.getBoundingClientRect();
-    const spots = pr ? [{ left: pr.left - r.left, width: pr.width * 0.45, top: pr.top - r.top, weight: 3 }] : [];
+    // On a phone the covers stack and the player box is a long way down, so it's a less likely perch.
+    const narrow = innerWidth < 640;
+    const spots = pr ? [{ left: pr.left - r.left, width: pr.width * 0.45, top: pr.top - r.top, weight: narrow ? 1 : 3 }] : [];
     if (!spots.length) spots.push({ left: 0, width: r.width * 0.45, top: 0, weight: 3 });
     const onScreen = (b: DOMRect) => b.top > 60 && b.bottom < innerHeight;
     const add = (b: DOMRect, top: number, weight: number, from = 0, to = 1) =>
@@ -114,7 +116,9 @@ export function mountWyvern(box: HTMLElement) {
       add(b, b.top - r.top, 1);
     });
     const rule = document.querySelector<HTMLElement>("#music > summary")?.getBoundingClientRect();
-    if (rule) add(rule, rule.bottom - r.top, 2, 0.25, 0.95);
+    if (rule) add(rule, rule.bottom - r.top, narrow ? 5 : 2, 0.25, 0.95);
+    // At the start it settles on the Music heading's rule, at the top of its section.
+    if (start && rule) return { px: (rule.left - r.left) + rule.width * rand(0.3, 0.8) - 30, py: rule.bottom - r.top - 37 };
     let roll = Math.random() * spots.reduce((n, sp) => n + sp.weight, 0);
     const spot = spots.find((sp) => (roll -= sp.weight) < 0) ?? spots[0];
     return { px: spot.left + rand(0.1, 0.85) * spot.width - 30, py: spot.top - 37 };
@@ -127,7 +131,7 @@ export function mountWyvern(box: HTMLElement) {
     cy = y;
     el.style.transform = `translate(${x}px,${y}px) scaleX(${dir === 1 ? -1 : 1})`;
   };
-  const first = pickPerch(box.getBoundingClientRect());
+  const first = pickPerch(box.getBoundingClientRect(), true);
   place(first.px, first.py, Math.random() < 0.5 ? 1 : -1);
   el.style.visibility = "visible";
 

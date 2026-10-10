@@ -96,9 +96,9 @@ const posts = await Promise.all(
   </p>
 
   <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-16">
-    <li><a href="https://github.com/w-martin" class="text-body hover:text-accent">GitHub</a></li>
-    <li><a href="https://linkedin.com/in/wil-martin" class="text-body hover:text-accent">LinkedIn</a></li>
-    <li><a href="https://pypi.org/user/will-martin" class="text-body hover:text-accent">PyPI</a></li>
+    <li><a href="https://github.com/w-martin" class="link">GitHub</a></li>
+    <li><a href="https://linkedin.com/in/wil-martin" class="link">LinkedIn</a></li>
+    <li><a href="https://pypi.org/user/will-martin" class="link">PyPI</a></li>
   </ul>
 
   <details id="software" class="scroll-mt-8 mb-16" open>
@@ -111,7 +111,7 @@ const posts = await Promise.all(
           <p class="mb-3">{p.blurb}</p>
           <ul class="flex gap-4 font-sans text-sm">
             {p.links.map((l) => (
-              <li><a href={l.href} class="text-accent">{l.label}</a></li>
+              <li><a href={l.href} class="link">{l.label}</a></li>
             ))}
           </ul>
         </article>
@@ -125,32 +125,12 @@ const posts = await Promise.all(
       Away from the keyboard, I write and record instrumental guitar music, self-released.
     </p>
 
-    <div class="flex flex-wrap gap-3 mb-8">
-      <a
-        href="https://will-martin.bandcamp.com"
-        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
-      >
-        Listen on Bandcamp
-      </a>
-      <a
-        href="https://open.spotify.com/artist/3lTPmRwT3ZVgIRjzzzuxOS"
-        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
-      >
-        Listen on Spotify
-      </a>
-      <a
-        href="https://music.youtube.com/@will_martin"
-        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
-      >
-        Listen on YouTube Music
-      </a>
-      <a
-        href="https://music.apple.com/gb/artist/will-martin/1571585762"
-        class="inline-block font-sans text-sm px-4 py-2 border border-accent text-accent rounded hover:bg-accent hover:text-white transition-colors"
-      >
-        Listen on Apple Music
-      </a>
-    </div>
+    <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-8">
+      <li><a href="https://will-martin.bandcamp.com" class="link">Listen on Bandcamp</a></li>
+      <li><a href="https://open.spotify.com/artist/3lTPmRwT3ZVgIRjzzzuxOS" class="link">Listen on Spotify</a></li>
+      <li><a href="https://music.youtube.com/@will_martin" class="link">Listen on YouTube Music</a></li>
+      <li><a href="https://music.apple.com/gb/artist/will-martin/1571585762" class="link">Listen on Apple Music</a></li>
+    </ul>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 gap-8">
       {covers.map((cover) => (
@@ -689,7 +669,7 @@ const posts = await Promise.all(
                 </svg>
               </div>
             </summary>
-            <div class="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-sans prose-a:text-accent mt-4 px-3">
+            <div class="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-sans mt-4 px-3">
               <Content />
             </div>
           </details>

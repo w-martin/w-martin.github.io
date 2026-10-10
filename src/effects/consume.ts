@@ -16,7 +16,7 @@ float fbm(vec2 p) {
   return s;
 }`;
 const FIRE = `#version 300 es
-precision mediump float;
+precision highp float;
 in vec2 uv; out vec4 o; uniform float t;
 ${NOISE}
 void main() {
@@ -39,7 +39,7 @@ void main() {
   o = vec4(c * a * 1.05, a * 0.7);
 }`;
 const ICE = `#version 300 es
-precision mediump float;
+precision highp float;
 in vec2 uv; out vec4 o; uniform float t; uniform vec2 origin;
 ${NOISE}
 void main() {

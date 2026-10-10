@@ -34,7 +34,7 @@ const nav = [
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="color-scheme" content="light" />
+    <meta name="color-scheme" content="only light" />
     <title>{title} | Will Martin</title>
     <meta name="description" content={description} />
     <link rel="icon" href="/favicon.ico?v=9" sizes="any" />
@@ -65,18 +65,18 @@ const nav = [
         if (dark) document.documentElement.classList.add("dark");
         // Declare only the scheme in use: "light dark" lets Samsung Internet
         // decide the page already handles dark and skip its own handling wrongly.
-        document.querySelector('meta[name="color-scheme"]').content = dark ? "dark" : "light";
+        document.querySelector('meta[name="color-scheme"]').content = dark ? "dark" : "only light";
       })();
     </script>
   </head>
   <body class="min-h-screen flex flex-col bg-paper transition-colors">
     <header id="site-header" class="no-anim sticky top-0 z-10 border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
-        <a href="/" class="font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
+        <a href="/" class="bar-link font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
         <a
           id="now-playing"
           href="#bandcamp-player"
-          class="hidden items-center gap-1.5 text-sm text-body hover:text-accent no-underline min-w-0 flex-1"
+          class="hidden items-center gap-1.5 text-sm text-body bar-link no-underline min-w-0 flex-1"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-4 h-4 flex-shrink-0">
             <path d="M9 18V5l12-2v13M9 18a3 3 0 11-6 0 3 3 0 016 0zM21 16a3 3 0 11-6 0 3 3 0 016 0z" />
@@ -87,7 +87,7 @@ const nav = [
           <ul id="nav-links" class="flex items-center gap-x-4 sm:gap-x-6 font-sans text-sm">
             {nav.map((item) => (
               <li>
-                <a href={item.href} class="nav-link text-body hover:text-accent no-underline flex items-center gap-1.5 p-2 -m-2" aria-label={item.label}>
+                <a href={item.href} class="nav-link text-body bar-link no-underline flex items-center gap-1.5 p-2 -m-2" aria-label={item.label}>
                   <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-4 h-4 flex-shrink-0">
                     <path d={item.icon} />
                   </svg>
@@ -102,7 +102,7 @@ const nav = [
             aria-label="Animations"
             aria-pressed="true"
             title="Animations: on / calm"
-            class="flex items-center gap-1.5 font-sans text-sm text-body hover:text-accent cursor-pointer"
+            class="flex items-center gap-1.5 font-sans text-sm text-body bar-link cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 motion-on">
               <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17v4M17 19h4"/>
@@ -116,7 +116,7 @@ const nav = [
             id="theme-toggle"
             type="button"
             aria-label="Toggle dark mode"
-            class="flex items-center gap-1.5 font-sans text-sm text-body hover:text-accent cursor-pointer"
+            class="flex items-center gap-1.5 font-sans text-sm text-body bar-link cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 dark:hidden">
               <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.71-.71M6.34 6.34l-.71-.71m12.02 0l-.71.71M6.34 17.66l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -241,7 +241,7 @@ const nav = [
         if (warm) ring.appendChild(rays);
 
         // fae lights: scattered around the toggle; each wakes when the front reaches it
-        const motes = Array.from({ length: 70 }, () => {
+        const motes = Array.from({ length: matchMedia("(pointer: coarse)").matches ? 28 : 70 }, () => {
           const d = Math.sqrt(Math.random()) * radius * 0.92;
           const a = Math.random() * 6.283;
           return { d, px: x + Math.cos(a) * d, py: y + Math.sin(a) * d, size: 2 + Math.random() * 3.2, born: false };
@@ -251,8 +251,8 @@ const nav = [
           m.born = true;
           const el = document.createElement("span");
           const sz = m.size * 0.85;
-          // small glowing lights, the same as the ones the wisp sheds
-          el.style.cssText = `position:absolute;left:${m.px}px;top:${m.py}px;width:${sz}px;height:${sz}px;margin:${-sz / 2}px 0 0 ${-sz / 2}px;border-radius:50%;background:#fff;box-shadow:0 0 ${sz * 3}px ${sz}px color-mix(in srgb,var(--color-accent) 80%,transparent),0 0 ${sz * 8}px ${sz * 2}px color-mix(in srgb,var(--color-accent) 30%,transparent)`;
+          // small glowing lights, in the same colour as the wisp (the page's body colour)
+          el.style.cssText = `position:absolute;left:${m.px}px;top:${m.py}px;width:${sz}px;height:${sz}px;margin:${-sz / 2}px 0 0 ${-sz / 2}px;border-radius:50%;background:var(--color-body);box-shadow:0 0 ${sz * 3}px ${sz}px color-mix(in srgb,var(--color-body) 70%,transparent),0 0 ${sz * 8}px ${sz * 2}px color-mix(in srgb,var(--color-body) 25%,transparent)`;
           ring.appendChild(el);
           active++;
           const dx = (Math.random() - 0.5) * 30;
@@ -260,7 +260,7 @@ const nav = [
           el.animate(
             [
               { opacity: 0, transform: "translate(0,0) scale(.4)" },
-              { opacity: 1, transform: `translate(${dx * 0.3}px,${dy * 0.3}px) scale(1)`, offset: 0.25 },
+              { opacity: 1, transform: `translate(${dx * 0.2}px,${dy * 0.2}px) scale(1)`, offset: 0.12 },
               { opacity: 0.8, transform: `translate(${dx * 0.7}px,${dy * 0.7}px) scale(.9)`, offset: 0.65 },
               { opacity: 0, transform: `translate(${dx}px,${dy}px) scale(.5)` },
             ],
@@ -287,7 +287,8 @@ const nav = [
           }
           const rimA = 0.55 * Math.min(1, (1 - p) / 0.25);
           rim.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 46}px, rgba(${cr},${cg},${cb},${rimA}) ${outer - 5}px, rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${Math.min(255, cb + 0)},${rimA * 0.4}) ${outer + 3}px, transparent ${outer + 16}px)`;
-          for (const m of motes) if (!m.born && outer >= m.d) wake(m);
+          // they wake just ahead of the edge, so each is already glowing as the front reaches it
+          for (const m of motes) if (!m.born && outer >= m.d - 150) wake(m);
           if (done() && active === 0) return ring.remove();
           requestAnimationFrame(tick);
         };
@@ -328,7 +329,7 @@ const nav = [
           try {
             localStorage.setItem("theme", isDark ? "dark" : "light");
           } catch {}
-          document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "light";
+          document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "only light";
         };
         if (document.documentElement.dataset.motion === "calm") return flip();
         if (vt) vt.transition?.skipTransition?.();
@@ -348,9 +349,10 @@ const nav = [
         ring.className = "theme-veil";
         ring.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646";
 
-        // No View Transitions (some browsers): the theme switches at once and the veil still rolls out
+        // No View Transitions, or a touch device (where the full snapshot transition glitched): the theme
+        // switches at once and a lighter veil still rolls out
         // over it, so the change is never a plain snap.
-        if (!document.startViewTransition) {
+        if (!document.startViewTransition || matchMedia("(pointer: coarse)").matches) {
           flip();
           document.body.appendChild(ring);
           vt = { ring };

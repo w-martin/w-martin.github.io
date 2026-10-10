@@ -91,7 +91,8 @@ export function mountWisp(section: HTMLElement) {
   const drift = async () => {
     const s = stops();
     if (calm() || s.length < 2) return;
-    let next = Math.floor(Math.random() * s.length);
+    // It favours the top of the section: half the time it heads back to the first project.
+    let next = Math.random() < 0.5 ? 0 : Math.floor(Math.random() * s.length);
     if (next === at) next = (next + 1) % s.length;
     const [x1, y1] = pos;
     const [x2, y2] = s[next];

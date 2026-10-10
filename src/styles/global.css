@@ -55,6 +55,10 @@
   --color-accent: #104f85;
   /* The page background: a soft grey in light mode (pure white was harsh), near-black in dark. */
   --color-paper: #dfdfdc;
+  /* Link text and other emphasis: darker than the body grey, so it stays readable on the paper. */
+  --color-ink: #1d1b18;
+  /* The tint behind links and toolbar items: candle-amber on the warm paper (blue in dark mode). */
+  --color-wash: #c08a2e;
   --color-bar: #dfdfdc;
   --color-body: #454545;
   --color-rule: #b3b3af;
@@ -76,6 +80,8 @@
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .96 0 0 0 0 .9 .2 0 0 0 -.06'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --color-accent: #93c4ec;
   --color-paper: #1e1b18;
+  --color-ink: #f2ede2;
+  --color-wash: var(--color-accent);
   --color-bar: #131110;
   --color-body: #dcd6cc;
   --color-rule: #3b362f;
@@ -95,7 +101,7 @@ button:not(:disabled) {
 
 html {
   scroll-behavior: smooth;
-  color-scheme: light;
+  color-scheme: only light;
   background-color: var(--color-paper);
 }
 
@@ -224,4 +230,68 @@ html.vt-run *,
 html.vt-run *::before,
 html.vt-run *::after {
   transition: none !important;
+}
+
+/* Section headings: the browser's triangle is replaced by a small ring like the wisp's, which gains a
+   dot at its heart when the section is open. */
+main > details > summary {
+  list-style: none;
+}
+
+main > details > summary::-webkit-details-marker {
+  display: none;
+}
+
+main > details > summary::before {
+  content: "";
+  display: inline-block;
+  width: 0.5em;
+  height: 0.5em;
+  margin: 0 0.55em 0.12em 0.1em;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  vertical-align: middle;
+  opacity: 0.7;
+  background: radial-gradient(circle, currentColor 0 0%, transparent 1%);
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+
+main > details[open] > summary::before {
+  opacity: 1;
+  background: radial-gradient(circle, currentColor 0 26%, transparent 30%);
+}
+
+/* Links: the word in the page's ink colour on a faint candle-coloured wash, like lantern light behind it.
+   No lines or glyphs; hovering deepens the wash and lights the word with a soft glow. */
+.link,
+.prose a {
+  color: var(--color-ink);
+  text-decoration: none;
+  font-weight: inherit;
+  padding: 0.05em 0.3em;
+  margin: 0 -0.1em;
+  border-radius: 0.35em;
+  background-color: color-mix(in srgb, var(--color-wash) 22%, transparent);
+  transition: background-color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.link:hover,
+.link:focus-visible,
+.prose a:hover,
+.prose a:focus-visible {
+  background-color: color-mix(in srgb, var(--color-wash) 40%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--color-wash) 60%, transparent);
+}
+
+/* Toolbar items use the same hover as links: a faint candle-coloured wash and a soft glow on the word. */
+.bar-link {
+  border-radius: 0.5em;
+  transition: background-color 0.25s ease, color 0.25s ease, text-shadow 0.25s ease;
+}
+
+.bar-link:hover,
+.bar-link:focus-visible {
+  color: var(--color-ink);
+  background-color: color-mix(in srgb, var(--color-wash) 30%, transparent);
+  text-shadow: 0 0 12px color-mix(in srgb, var(--color-wash) 60%, transparent);
 }
