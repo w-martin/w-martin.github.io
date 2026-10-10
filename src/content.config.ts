@@ -7,6 +7,8 @@ const blog = defineCollection({
     title: z.string(),
     date: z.coerce.date(),
     description: z.string().optional(),
+    // Drafts show in `npm run dev` for reviewing, and are left out of every build (including the deploy).
+    draft: z.boolean().default(false),
   }),
 });
 

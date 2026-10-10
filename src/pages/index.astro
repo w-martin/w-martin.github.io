@@ -9,7 +9,8 @@ import ladderParticles from "../assets/music/layers/the-ladder-particle-mask.web
 import flightArt from "../assets/music/flight-of-the-white-dragon.jpg";
 import flightGuitar from "../assets/music/layers/flight-of-the-white-dragon-guitar.webp";
 import flightBlink from "../assets/music/layers/flight-of-the-white-dragon-blink.webp";
-import flightParticles from "../assets/music/layers/flight-of-the-white-dragon-particle-mask.webp";
+import flightSnowFront from "../assets/music/layers/flight-of-the-white-dragon-snow-front.webp";
+import flightSnowBack from "../assets/music/layers/flight-of-the-white-dragon-snow-back.webp";
 
 // Effect overlays share the cover's coordinates. The particle mask limits embers/snow to the
 // far background, so they never cross the figures, the rocks or the title.
@@ -18,7 +19,13 @@ const covers = [
     title: "The Ladder",
     track: "2406607306",
     art: ladderArt,
-    particles: { kind: "embers", mask: ladderParticles },
+    particles: {
+      kind: "embers",
+      layers: [{ mask: ladderParticles.src, count: 28, r: [0.8, 2.2], vy: [-0.08, -0.03], alpha: 1 }],
+    },
+    shimmer: ladderParticles.src,
+    consume: "fire",
+    breath: undefined,
     guitar: ladderGuitar,
     glasses: effects["the-ladder"].glasses,
     placeholder: effects["the-ladder"].placeholder,
@@ -28,7 +35,18 @@ const covers = [
     title: "Flight of the White Dragon",
     track: "580727493",
     art: flightArt,
-    particles: { kind: "snow", mask: flightParticles },
+    // Two snowfalls at different depths: big, fast flakes between the foreground and the wings
+    // (anywhere the foreground isn't), small slow flakes between the wings and the far background.
+    particles: {
+      kind: "snow",
+      layers: [
+        { mask: flightSnowFront.src, count: 16, r: [2.6, 5], vy: [0.05, 0.1], alpha: 0.85, soft: true },
+        { mask: flightSnowBack.src, count: 46, r: [0.8, 1.8], vy: [0.02, 0.045], alpha: 0.95 },
+      ],
+    },
+    shimmer: undefined,
+    consume: "ice",
+    breath: effects["flight-of-the-white-dragon"].breath,
     guitar: flightGuitar,
     glasses: effects["flight-of-the-white-dragon"].glasses,
     placeholder: effects["flight-of-the-white-dragon"].placeholder,
@@ -61,7 +79,7 @@ const software = [
 // Pre-rendered by tools/thumbs/make_thumbs.py (light and dark variant per post).
 const thumbs = import.meta.glob<ImageMetadata>("../assets/thumbs/*.webp", { eager: true, import: "default" });
 
-const sortedPosts = (await getCollection("blog")).sort(
+const sortedPosts = (await getCollection("blog", ({ data }) => import.meta.env.DEV || !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
 );
 const posts = await Promise.all(
@@ -71,11 +89,10 @@ const posts = await Promise.all(
 
 <Base title="Home">
   <!-- First-draft copy -- edit freely. -->
-  <h1 class="font-sans text-3xl font-bold text-black dark:text-white mb-6">Hi, I'm Will.</h1>
+  <h1 class="font-sans text-3xl font-bold text-black dark:text-white mb-3">Music, tools and notes.</h1>
 
-  <p class="mb-4">
-    I'm a PhD computer scientist and ML engineer, currently tech lead for ML
-    infrastructure at giffgaff.
+  <p class="mb-6">
+    Made by Will Martin: computer scientist, solo guitarist, tool builder and machine learner.
   </p>
 
   <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-16">
@@ -143,7 +160,11 @@ const posts = await Promise.all(
           data-title={`${cover.title}: Bandcamp player`}
         >
           <div class="relative group">
-            <div data-cover class="relative w-full aspect-square overflow-hidden rounded mb-3">
+            <div
+              data-cover
+              data-consume={cover.consume}
+              class="relative w-full aspect-square overflow-hidden rounded mb-3"
+            >
               <div
                 aria-hidden="true"
                 class="cover-ph absolute inset-0 bg-cover"
@@ -179,9 +200,17 @@ const posts = await Promise.all(
                 style={`-webkit-mask-image:url(${cover.guitar.src});mask-image:url(${cover.guitar.src})`}
               />
               <span data-glint-spot class="glint-spot" style={`left:${cover.glasses.x}%;top:${cover.glasses.y}%`} />
+              {cover.shimmer && (
+                <canvas
+                  data-shimmer
+                  data-mask={cover.shimmer}
+                  class="cover-art absolute inset-0 w-full h-full pointer-events-none"
+                />
+              )}
               <canvas
                 data-particles={cover.particles.kind}
-                data-mask={cover.particles.mask.src}
+                data-layers={JSON.stringify(cover.particles.layers)}
+                data-breath={cover.breath ? `${cover.breath.x},${cover.breath.y}` : undefined}
                 class="absolute inset-0 w-full h-full pointer-events-none"
               />
             </div>
@@ -209,21 +238,34 @@ const posts = await Promise.all(
   </details>
 
   <script>
+    // With "reduce motion" on the page goes calm: still images and fades, nothing travels or loops.
+    const reduced = {
+      get matches() {
+        return document.documentElement.dataset.motion === "calm";
+      },
+    };
     const player = document.getElementById("bandcamp-player");
     const nowPlaying = document.getElementById("now-playing");
     const nowPlayingTitle = document.getElementById("now-playing-title");
+
+    // Which track the player holds, so clicking that cover again leaves it (and its effect) alone.
+    let loadedSrc = "";
 
     document.querySelectorAll<HTMLElement>(".bandcamp-embed").forEach((article) => {
       const trigger = article.querySelector<HTMLButtonElement>(".bandcamp-trigger");
       if (!trigger || !player) return;
 
       trigger.addEventListener("click", () => {
+        const src = article.dataset.src ?? "";
+        // Already loaded: leave the player alone. The cover's fire/ice still replays.
+        if (src === loadedSrc) return;
+        loadedSrc = src;
         const iframe = document.createElement("iframe");
         iframe.style.display = "block";
         iframe.style.border = "0";
         iframe.style.width = "100%";
         iframe.style.height = "100%";
-        iframe.src = article.dataset.src ?? "";
+        iframe.src = src;
         iframe.title = article.dataset.title ?? "Bandcamp player";
         iframe.allow = "autoplay";
 
@@ -263,6 +305,7 @@ const posts = await Promise.all(
     const visible = new Set<Element>();
     // A cover counts as ready once its art has loaded and decoded; until then it shows only the
     // placeholder, with no particles, glints or play button.
+    let shimmerModule: typeof import("../effects/shimmer") | null = null;
     const isReady = (cover: Element) => (cover as HTMLElement).dataset.ready !== undefined;
     const rand = (lo: number, hi: number) => lo + Math.random() * (hi - lo);
 
@@ -285,29 +328,28 @@ const posts = await Promise.all(
     }
 
     type Particle = { x: number; y: number; vx: number; vy: number; r: number; phase: number };
-    type Field = { kind: string; items: Particle[]; w: number; h: number; mask: Uint8ClampedArray | null };
+    type LayerConfig = { mask: string; count: number; r: [number, number]; vy: [number, number]; alpha: number; soft?: boolean };
+    type Layer = { items: Particle[]; mask: Uint8ClampedArray | null; alpha: number; soft: boolean };
+    // A short-lived one-off: breath puffs and tap bursts. Positions are fractions of the cover.
+    type Fx = { x: number; y: number; vx: number; vy: number; ay: number; r0: number; r1: number; life: number; age: number; alpha: number };
+    type Field = { kind: string; layers: Layer[]; w: number; h: number; fx: Fx[] };
     const fields = new Map<HTMLCanvasElement, Field>();
-    covers.forEach((cover) => {
-      const canvas = cover.querySelector<HTMLCanvasElement>("canvas[data-particles]");
-      if (!canvas) return;
-      const kind = canvas.dataset.particles ?? "snow";
-      const embers = kind === "embers";
-      const items = Array.from({ length: embers ? 28 : 36 }, () => ({
-        x: Math.random(),
-        y: Math.random(),
-        vx: rand(-0.01, 0.015),
-        vy: embers ? -rand(0.03, 0.08) : rand(0.025, 0.06),
-        r: embers ? rand(0.8, 2.2) : rand(0.8, 2.4),
-        phase: rand(0, 6.28),
-      }));
-      const field: Field = { kind, items, w: 0, h: 0, mask: null };
-      fields.set(canvas, field);
-      new ResizeObserver(() => {
-        field.w = canvas.width = Math.round(canvas.clientWidth);
-        field.h = canvas.height = Math.round(canvas.clientHeight);
-      }).observe(canvas);
 
-      // Where particles may show: the alpha of the depth-derived mask, sampled per particle.
+    // A soft round flake, stamped for the big out-of-focus ones.
+    const flake = document.createElement("canvas");
+    flake.width = flake.height = 32;
+    {
+      const g = flake.getContext("2d")!;
+      const grad = g.createRadialGradient(16, 16, 0, 16, 16, 16);
+      grad.addColorStop(0, "rgba(255,255,255,1)");
+      grad.addColorStop(0.45, "rgba(255,255,255,0.7)");
+      grad.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = grad;
+      g.fillRect(0, 0, 32, 32);
+    }
+
+    // Reads a mask's alpha channel onto a coarse grid, which is all the particles need.
+    const loadMask = (url: string, done: (m: Uint8ClampedArray) => void) => {
       const img = new Image();
       img.onload = () => {
         const c = document.createElement("canvas");
@@ -315,10 +357,42 @@ const posts = await Promise.all(
         const cx = c.getContext("2d", { willReadFrequently: true })!;
         cx.drawImage(img, 0, 0, MASK_PX, MASK_PX);
         const px = cx.getImageData(0, 0, MASK_PX, MASK_PX).data;
-        field.mask = new Uint8ClampedArray(MASK_PX * MASK_PX);
-        for (let i = 0; i < field.mask.length; i++) field.mask[i] = px[i * 4 + 3];
+        const m = new Uint8ClampedArray(MASK_PX * MASK_PX);
+        for (let i = 0; i < m.length; i++) m[i] = px[i * 4 + 3];
+        done(m);
       };
-      img.src = canvas.dataset.mask ?? "";
+      img.src = url;
+    };
+
+    covers.forEach((cover) => {
+      const canvas = cover.querySelector<HTMLCanvasElement>("canvas[data-particles]");
+      if (!canvas) return;
+      const configs: LayerConfig[] = JSON.parse(canvas.dataset.layers ?? "[]");
+      const field: Field = {
+        kind: canvas.dataset.particles ?? "snow",
+        w: 0,
+        h: 0,
+        fx: [],
+        layers: configs.map((c) => ({
+          mask: null,
+          alpha: c.alpha,
+          soft: !!c.soft,
+          items: Array.from({ length: c.count }, () => ({
+            x: Math.random(),
+            y: Math.random(),
+            vx: rand(-0.01, 0.015),
+            vy: rand(c.vy[0], c.vy[1]),
+            r: rand(c.r[0], c.r[1]),
+            phase: rand(0, 6.28),
+          })),
+        })),
+      };
+      fields.set(canvas, field);
+      new ResizeObserver(() => {
+        field.w = canvas.width = Math.round(canvas.clientWidth);
+        field.h = canvas.height = Math.round(canvas.clientHeight);
+      }).observe(canvas);
+      configs.forEach((c, i) => loadMask(c.mask, (m) => (field.layers[i].mask = m)));
     });
 
     const maskAt = (m: Uint8ClampedArray, x: number, y: number) =>
@@ -327,47 +401,77 @@ const posts = await Promise.all(
     function drawParticles(canvas: HTMLCanvasElement, t: number, dt: number) {
       const f = fields.get(canvas);
       const ctx = canvas.getContext("2d");
-      if (!f || !ctx || !f.w || !f.mask) return;
+      if (!f || !ctx || !f.w) return;
       const embers = f.kind === "embers";
       ctx.clearRect(0, 0, f.w, f.h);
       ctx.globalCompositeOperation = embers ? "lighter" : "source-over";
-      for (const p of f.items) {
-        p.y += p.vy * dt;
-        p.x += (p.vx + Math.sin(t / 1400 + p.phase) * 0.012) * dt;
-        if (p.y < -0.05) p.y = 1.05;
-        if (p.y > 1.05) p.y = -0.05;
-        if (p.x < -0.05) p.x = 1.05;
-        if (p.x > 1.05) p.x = -0.05;
+      for (const layer of f.layers) {
+        const mask = layer.mask;
+        if (!mask) continue;
+        for (const p of layer.items) {
+          p.y += p.vy * dt;
+          p.x += (p.vx + Math.sin(t / 1400 + p.phase) * 0.012) * dt;
+          if (p.y < -0.05) p.y = 1.05;
+          if (p.y > 1.05) p.y = -0.05;
+          if (p.x < -0.05) p.x = 1.05;
+          if (p.x > 1.05) p.x = -0.05;
 
-        const rad = p.r * (f.w / 350);
-        const reach = (embers ? rad * 3 : rad) / f.w;
-        // The least permissive of the centre and its four edges, so a glow never spills over a figure.
-        const visibility = Math.min(
-          maskAt(f.mask, p.x, p.y),
-          maskAt(f.mask, p.x - reach, p.y),
-          maskAt(f.mask, p.x + reach, p.y),
-          maskAt(f.mask, p.x, p.y - reach),
-          maskAt(f.mask, p.x, p.y + reach),
-        );
-        if (visibility < 0.02) continue;
+          const rad = p.r * (f.w / 350);
+          const reach = (embers ? rad * 3 : rad) / f.w;
+          // The least permissive of the centre and its four edges, so a flake never spills over a figure.
+          const visibility = Math.min(
+            maskAt(mask, p.x, p.y),
+            maskAt(mask, p.x - reach, p.y),
+            maskAt(mask, p.x + reach, p.y),
+            maskAt(mask, p.x, p.y - reach),
+            maskAt(mask, p.x, p.y + reach),
+          );
+          if (visibility < 0.02) continue;
 
-        const flicker = embers ? 0.55 + 0.45 * Math.sin(t / 220 + p.phase * 3) : 0.85;
-        const px = p.x * f.w;
-        const py = p.y * f.h;
-        if (embers) {
-          ctx.globalAlpha = flicker * visibility;
-          ctx.drawImage(glow, px - rad * 3, py - rad * 3, rad * 6, rad * 6);
-        } else {
-          ctx.globalAlpha = 0.75 * flicker * visibility;
-          ctx.fillStyle = "#fff";
-          ctx.beginPath();
-          ctx.arc(px, py, rad, 0, 6.283);
-          ctx.fill();
+          const flicker = embers ? 0.55 + 0.45 * Math.sin(t / 220 + p.phase * 3) : 0.85;
+          const px = p.x * f.w;
+          const py = p.y * f.h;
+          ctx.globalAlpha = layer.alpha * flicker * visibility;
+          if (embers) ctx.drawImage(glow, px - rad * 3, py - rad * 3, rad * 6, rad * 6);
+          else if (layer.soft) ctx.drawImage(flake, px - rad, py - rad, rad * 2, rad * 2);
+          else {
+            ctx.fillStyle = "#fff";
+            ctx.beginPath();
+            ctx.arc(px, py, rad, 0, 6.283);
+            ctx.fill();
+          }
         }
+      }
+      for (let i = f.fx.length - 1; i >= 0; i--) {
+        const e = f.fx[i];
+        e.age += dt;
+        if (e.age >= e.life) {
+          f.fx.splice(i, 1);
+          continue;
+        }
+        const k = e.age / e.life;
+        e.vy += e.ay * dt;
+        e.x += e.vx * dt;
+        e.y += e.vy * dt;
+        const rad = (e.r0 + (e.r1 - e.r0) * k) * (f.w / 350);
+        ctx.globalCompositeOperation = "source-over";
+        ctx.globalAlpha = e.alpha * Math.min(1, k / 0.15) * (1 - k) ** 1.5;
+        ctx.drawImage(flake, e.x * f.w - rad, e.y * f.h - rad, rad * 2, rad * 2);
       }
       ctx.globalAlpha = 1;
     }
 
+    // Cold breath: soft puffs that leave the nostril, drift forward and rise as they spread.
+    function spawnBreath(canvas: HTMLCanvasElement, x: number, y: number) {
+      const f = fields.get(canvas);
+      if (!f) return;
+      for (let i = 0; i < 10; i++)
+        setTimeout(() => {
+          f.fx.push({ x: x + rand(-0.004, 0.004), y: y + rand(-0.004, 0.004), vx: rand(0.045, 0.075), vy: rand(-0.004, 0.008), ay: -0.014, r0: 3, r1: rand(20, 32), life: rand(2.6, 3.6), age: 0, alpha: 0.75 });
+        }, i * 100);
+    }
+
+    const stillDrawn = new Set<HTMLCanvasElement>();
     let running = false;
     let lastDraw = 0;
     function frame(t: number) {
@@ -378,10 +482,32 @@ const posts = await Promise.all(
       if (t - lastDraw >= FRAME_MS - 2) {
         const dt = Math.min((t - lastDraw) / 1000, 0.1);
         lastDraw = t;
+        let waiting = false;
         visible.forEach((cover) => {
+          if (!isReady(cover)) {
+            waiting = true;
+            return;
+          }
           const canvas = cover.querySelector<HTMLCanvasElement>("canvas[data-particles]");
-          if (canvas && isReady(cover)) drawParticles(canvas, t, dt);
+          if (reduced.matches) {
+            // Calm mode: each field is drawn once, as a still image, and then the loop stops.
+            if (canvas && !stillDrawn.has(canvas)) {
+              const f = fields.get(canvas);
+              if (f && f.w && f.layers.every((l) => l.mask)) {
+                drawParticles(canvas, t, 0);
+                stillDrawn.add(canvas);
+              } else waiting = true;
+            }
+            return;
+          }
+          const shimmer = cover.querySelector<HTMLCanvasElement>("canvas[data-shimmer]");
+          if (shimmer && shimmerModule) shimmerModule.drawShimmer(shimmer, cover, t);
+          if (canvas) drawParticles(canvas, t, dt);
         });
+        if (reduced.matches && !waiting) {
+          running = false;
+          return;
+        }
       }
       requestAnimationFrame(frame);
     }
@@ -400,6 +526,19 @@ const posts = await Promise.all(
     );
     covers.forEach((c) => observer.observe(c));
     document.addEventListener("visibilitychange", ensureLoop);
+    // The animations button: going calm redraws a still image; going full restarts the loop.
+    window.addEventListener("motionchange", () => {
+      stillDrawn.clear();
+      if (!reduced.matches && !shimmerModule)
+        covers.forEach((c) => {
+          if (isReady(c) && c.querySelector("canvas[data-shimmer]"))
+            import("../effects/shimmer").then((m) => {
+              shimmerModule = m;
+              ensureLoop();
+            });
+        });
+      ensureLoop();
+    });
 
     // A cover counts as ready once its art has loaded and decoded; until then it shows only the
     // placeholder, with no particles, glints or play button.
@@ -407,6 +546,11 @@ const posts = await Promise.all(
       const art = cover.querySelector<HTMLImageElement>("img.cover-art");
       const ready = () => {
         cover.setAttribute("data-ready", "");
+        if (!reduced.matches && cover.querySelector("canvas[data-shimmer]"))
+          import("../effects/shimmer").then((m) => {
+            shimmerModule = m;
+            ensureLoop();
+          });
         ensureLoop();
       };
       if (!art) return ready();
@@ -422,7 +566,9 @@ const posts = await Promise.all(
     function every(el: Element, lo: number, hi: number, fire: () => void, first: number) {
       const cover = el.closest("[data-cover]");
       const tick = () => {
-        if (cover && visible.has(cover) && isReady(cover) && !document.hidden) fire();
+        // Calm mode keeps the blink (a fade) but not the sparkle or sweep.
+        const still = reduced.matches && !el.hasAttribute("data-blink");
+        if (cover && visible.has(cover) && isReady(cover) && !document.hidden && !still) fire();
         setTimeout(tick, rand(lo, hi) * 1000);
       };
       setTimeout(tick, first * 1000);
@@ -434,16 +580,11 @@ const posts = await Promise.all(
           [{ opacity: 0 }, { opacity: 1, offset: 0.35 }, { opacity: 1, offset: 0.6 }, { opacity: 0 }],
           { duration: 260, easing: "ease-in-out" },
         );
-      every(
-        el,
-        9,
-        22,
-        () => {
-          blink();
-          if (Math.random() < 0.15) setTimeout(blink, 380);
-        },
-        rand(4, 8),
-      );
+      const run = () => {
+        blink();
+        if (Math.random() < 0.15) setTimeout(blink, 380);
+      };
+      every(el, 9, 22, run, rand(4, 8));
     });
 
     document.querySelectorAll<HTMLElement>("[data-glint-spot]").forEach((el) => {
@@ -472,6 +613,45 @@ const posts = await Promise.all(
         );
       every(el, 45, 100, sweep, rand(15, 28));
     });
+
+    document.querySelectorAll<HTMLCanvasElement>("canvas[data-breath]").forEach((canvas) => {
+      const [bx, by] = (canvas.dataset.breath ?? "0,0").split(",").map((v) => Number(v) / 100);
+      every(canvas, 8, 16, () => !reduced.matches && spawnBreath(canvas, bx, by), rand(6, 10));
+    });
+
+    // The effect code is fetched the first time a pointer nears a cover, so a click doesn't wait.
+    covers.forEach((cover) => {
+      const wrap = cover.parentElement;
+      const warm = () => import("../effects/consume");
+      wrap?.addEventListener("pointerenter", warm, { once: true });
+      wrap?.addEventListener("touchstart", warm, { once: true, passive: true });
+      wrap?.addEventListener("click", (e) => {
+        if (!isReady(cover)) return;
+        const rect = cover.getBoundingClientRect();
+        const x = (e.clientX - rect.left) / rect.width;
+        const y = (e.clientY - rect.top) / rect.height;
+        warm().then((m) => m.consume(cover, x, y));
+      });
+    });
+
+    // The page creatures are separate modules, fetched only when their section is about to appear.
+    const lazy = (selector: string, load: (el: HTMLElement) => void) => {
+      const target = document.querySelector<HTMLElement>(selector);
+      if (!target) return;
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (!entries.some((e) => e.isIntersecting)) return;
+          io.disconnect();
+          load(target);
+        },
+        { rootMargin: "500px" },
+      );
+      io.observe(target);
+    };
+    // Mounted on the whole Music section, not the player: loading a song replaces the player's contents.
+    lazy("#music", (el) => import("../creatures/wyvern").then((m) => m.mountWyvern(el)));
+    lazy("#blog > summary", (el) => import("../creatures/hermit").then((m) => m.mountHermit(el)));
+    lazy("#software", (el) => import("../creatures/wisp").then((m) => m.mountWisp(el)));
   </script>
 
   <details id="blog" class="scroll-mt-8" open>
@@ -493,7 +673,7 @@ const posts = await Promise.all(
                 )}
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
-                <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-white dark:bg-neutral-900">
+                <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-paper">
                   {thumbs[`../assets/thumbs/${post.id}-light.webp`] && (
                     <>
                       <Image src={thumbs[`../assets/thumbs/${post.id}-light.webp`]} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover dark:hidden" />

@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- The page's own line-art dragon, cropped tight so it fills the tile, with a heavy single-weight
+       line in the page's cream on its charcoal paper. -->
+  <rect width="512" height="512" rx="100" fill="#1e1b18"/>
+  <g transform="translate(-6 78) scale(5.35)" fill="none" stroke="#dcd6cc" stroke-width="5.4" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M80 24C83 21 88 20 92 22L98 25L93 27C90 28 86 28 83 27M82 21C80 17 76 15 72 16M85 20C85 15 82 12 79 11"/>
+    <path d="M80 24C76 28 74 33 68 36M83 27C81 34 79 40 74 44"/>
+    <path d="M68 36C60 34 52 34 44 37M74 44C66 49 52 49 44 44M68 47L65 54M50 48L47 55"/>
+    <path d="M44 37C36 38 28 42 22 47C18 51 12 51 9 49M44 44C38 47 32 51 26 54C21 57 16 58 12 56"/>
+    <path d="M66 36C66 26 60 15 50 7L38 11Q41 16 34 21Q37 27 40 31Q46 35 50 39Q58 39 66 36"/>
+    <circle cx="86.5" cy="23.4" r="1.6" fill="#dcd6cc" stroke="none"/>
+  </g>
+</svg>

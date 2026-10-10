@@ -85,6 +85,75 @@ def guitar_mask(name: str, src: Image.Image, key: int, max_sat: float) -> Image.
     return m
 
 
+def _poly(points, size=1000) -> np.ndarray:
+    m = Image.new("L", (size, size), 0)
+    ImageDraw.Draw(m).polygon(points, fill=255)
+    return np.asarray(m) > 0
+
+
+def _stroke(points, width, size=1000) -> np.ndarray:
+    m = Image.new("L", (size, size), 0)
+    d = ImageDraw.Draw(m)
+    d.line(points, fill=255, width=width, joint="curve")
+    for x, y in (points[0], points[-1]):
+        d.ellipse(
+            [x - width / 2, y - width / 2, x + width / 2, y + width / 2], fill=255
+        )
+    return np.asarray(m) > 0
+
+
+def flight_layers(music: Path) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
+    """Foreground / mid-ground / background masks (1000px) for the dragon cover."""
+    depth = np.load(
+        Path(__file__).parent / "cache" / "flight-of-the-white-dragon-depth.npy"
+    )
+    near_lo, near_hi = shapes.FLIGHT_DEPTH
+    deep = depth >= near_lo
+    wings = (_poly(shapes.FLIGHT_LEFT_WING) | _poly(shapes.FLIGHT_RIGHT_WING)) & deep
+    tail = np.zeros_like(deep)
+    for pts, width in shapes.FLIGHT_TAIL:
+        tail |= _stroke(pts, width)
+    extras = np.zeros_like(deep)
+    for poly in shapes.FLIGHT_FOREGROUND_EXTRAS:
+        extras |= _poly(poly) & deep
+    man = _poly(shapes.FLIGHT_MAN) & deep
+
+    size = (1000, 1000)
+    orig = np.asarray(
+        Image.open(music / "flight-of-the-white-dragon.jpg").convert("RGB").resize(size)
+    )
+    plain = np.asarray(
+        Image.open(music / "flight-of-the-white-dragon-wordless.jpg")
+        .convert("RGB")
+        .resize(size)
+    )
+    text = np.abs(orig.astype(int) - plain.astype(int)).max(2) > 40
+    text = (
+        np.asarray(
+            Image.fromarray(text.astype(np.uint8) * 255).filter(
+                ImageFilter.MaxFilter(9)
+            )
+        )
+        > 0
+    )
+
+    fg = ((depth >= near_hi) & ~wings & ~tail) | man | extras | text
+    mid = deep & ~fg & ~tail
+    return fg, mid, ~(fg | mid)
+
+
+def save_soft_mask(mask: np.ndarray, dest: Path, px: int = 125) -> None:
+    soft = np.asarray(
+        Image.fromarray(mask.astype(np.uint8) * 255).filter(
+            ImageFilter.GaussianBlur(2.5)
+        )
+    )
+    small = Image.fromarray(soft).resize((px, px), Image.LANCZOS)
+    rgba = Image.new("RGBA", (px, px), (255, 255, 255, 0))
+    rgba.putalpha(small)
+    rgba.save(dest, "WEBP", lossless=True, method=6)
+
+
 def placeholder(img: Image.Image) -> str:
     """A ~300 byte blurred stand-in, inlined so a cover never shows as an empty box."""
     buf = io.BytesIO()
@@ -108,6 +177,12 @@ def main(music: Path, out: Path) -> None:
         out / "flight-of-the-white-dragon-blink.webp", "WEBP", quality=90, method=6
     )
 
+    fg, _mid, bg = flight_layers(music)
+    # Snow in front of the mid-ground can drift anywhere the foreground doesn't cover; snow behind
+    # it only shows where the far background is visible.
+    save_soft_mask(~fg, out / "flight-of-the-white-dragon-snow-front.webp")
+    save_soft_mask(bg, out / "flight-of-the-white-dragon-snow-back.webp")
+
     for name, (img, key, max_sat) in srcs.items():
         m = guitar_mask(name, img, key, max_sat)
         white = Image.new("RGBA", (FULL, FULL), (255, 255, 255, 0))
@@ -120,6 +195,12 @@ def main(music: Path, out: Path) -> None:
             "glasses": {"x": round(gx / FULL * 100, 2), "y": round(gy / FULL * 100, 2)},
             "placeholder": placeholder(img),
         }
+        if name == "flight-of-the-white-dragon":
+            nx, ny = shapes.DRAGON_NOSTRIL
+            fx[name]["breath"] = {
+                "x": round(nx / FULL * 100, 2),
+                "y": round(ny / FULL * 100, 2),
+            }
     (out / "effects.json").write_text(json.dumps(fx, indent=2))
     print(json.dumps(fx))
 

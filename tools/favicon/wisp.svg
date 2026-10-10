@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <!-- The page's wisp as an icon: bold ring, heart dot and four rays in the page's cream on its charcoal
+       paper, with a soft accent-blue glow so it reads as a light, not a target. -->
+  <defs>
+    <radialGradient id="g" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#93c4ec" stop-opacity=".55"/>
+      <stop offset=".55" stop-color="#93c4ec" stop-opacity=".16"/>
+      <stop offset="1" stop-color="#93c4ec" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect width="512" height="512" rx="100" fill="#1e1b18"/>
+  <circle cx="256" cy="256" r="240" fill="url(#g)"/>
+  <g fill="none" stroke="#f1ece0" stroke-width="30" stroke-linecap="round">
+    <circle cx="256" cy="256" r="84"/>
+    <path d="M256 70v70M256 372v70M70 256h70M372 256h70"/>
+  </g>
+  <circle cx="256" cy="256" r="32" fill="#f1ece0"/>
+  <g fill="none" stroke="#93c4ec" stroke-width="16" stroke-linecap="round" opacity=".9">
+    <path d="M132 132l34 34M380 380l-34-34M380 132l-34 34M132 380l34-34"/>
+  </g>
+</svg>

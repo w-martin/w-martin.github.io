@@ -37,8 +37,8 @@ const nav = [
     <meta name="color-scheme" content="light" />
     <title>{title} | Will Martin</title>
     <meta name="description" content={description} />
-    <link rel="icon" href="/favicon.ico" sizes="any" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="icon" href="/favicon.ico?v=9" sizes="any" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=9" />
     <!-- Cloudflare Web Analytics -->
     <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js" data-cf-beacon='{"token": "072668fef6c24a439973530b7a9f7937"}'></script>
     <!-- End Cloudflare Web Analytics -->
@@ -50,6 +50,17 @@ const nav = [
         document.documentElement.classList.add("js");
         const stored = localStorage.getItem("theme");
         const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        // Motion: the visitor's saved choice wins; otherwise follow the OS "reduce motion" setting.
+        let motion = null;
+        try {
+          motion = localStorage.getItem("motion");
+        } catch {}
+        document.documentElement.dataset.motion =
+          motion === "full" || motion === "calm"
+            ? motion
+            : window.matchMedia("(prefers-reduced-motion: reduce)").matches
+              ? "calm"
+              : "full";
         const dark = stored === "dark" || (!stored && prefersDark);
         if (dark) document.documentElement.classList.add("dark");
         // Declare only the scheme in use: "light dark" lets Samsung Internet
@@ -58,8 +69,8 @@ const nav = [
       })();
     </script>
   </head>
-  <body class="min-h-screen flex flex-col bg-white dark:bg-neutral-950 transition-colors">
-    <header id="site-header" class="no-anim sticky top-0 z-10 border-b border-rule bg-white/90 dark:bg-neutral-950/90 backdrop-blur transition-colors duration-300">
+  <body class="min-h-screen flex flex-col bg-paper transition-colors">
+    <header id="site-header" class="no-anim sticky top-0 z-10 border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
         <a href="/" class="font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
         <a
@@ -86,10 +97,26 @@ const nav = [
             ))}
           </ul>
           <button
+            id="motion-toggle"
+            type="button"
+            aria-label="Animations"
+            aria-pressed="true"
+            title="Animations: on / calm"
+            class="flex items-center gap-1.5 font-sans text-sm text-body hover:text-accent cursor-pointer"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="w-5 h-5 motion-on">
+              <path d="M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z"/><path d="M19 17v4M17 19h4"/>
+            </svg>
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="w-5 h-5 motion-off">
+              <path d="M9 5v14M15 5v14"/>
+            </svg>
+            <span class="nav-label max-sm:hidden transition-[width,opacity] duration-300 overflow-hidden whitespace-nowrap">Animations</span>
+          </button>
+          <button
             id="theme-toggle"
             type="button"
             aria-label="Toggle dark mode"
-            class="text-body hover:text-accent"
+            class="flex items-center gap-1.5 font-sans text-sm text-body hover:text-accent cursor-pointer"
           >
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 dark:hidden">
               <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.71-.71M6.34 6.34l-.71-.71m12.02 0l-.71.71M6.34 17.66l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
@@ -97,6 +124,7 @@ const nav = [
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 hidden dark:block">
               <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
             </svg>
+            <span class="nav-label max-sm:hidden transition-[width,opacity] duration-300 overflow-hidden whitespace-nowrap">Theme</span>
           </button>
         </div>
       </nav>
@@ -113,10 +141,262 @@ const nav = [
     </footer>
 
     <script is:inline>
-      document.getElementById("theme-toggle").addEventListener("click", () => {
-        const isDark = document.documentElement.classList.toggle("dark");
-        localStorage.setItem("theme", isDark ? "dark" : "light");
-        document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "light";
+      // The new theme spreads out as a circle from the toggle (View Transitions); browsers without
+      // them switch instantly.
+      // Eased section jumps: the nav links glide to their section with a gentle ease (slower for longer
+      // distances), opening a closed section on arrival. Wheel, touch or key input cancels it at once,
+      // so ordinary scrolling is never touched. Calm mode and unsupported cases use the plain jump.
+      const easeInOut = (t) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
+      let glide = 0;
+      const cancelGlide = () => {
+        glide++;
+      };
+      for (const evt of ["wheel", "touchstart", "keydown", "mousedown"])
+        addEventListener(evt, cancelGlide, { passive: true });
+      document.querySelectorAll('header a[href^="/#"], header a[href="/"]').forEach((link) => {
+        link.addEventListener("click", (e) => {
+          if (location.pathname !== "/" || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+          const hash = link.getAttribute("href").slice(1);
+          // The name at the top goes home: scroll to the top and drop any #section from the address.
+          const home = hash.length <= 1;
+          if (document.documentElement.dataset.motion === "calm") {
+            if (home) {
+              e.preventDefault();
+              scrollTo({ top: 0, behavior: "instant" });
+              history.replaceState(null, "", location.pathname + location.search);
+            }
+            return;
+          }
+          const target = hash.length > 1 ? document.querySelector(hash.slice(1)) : null;
+          if (hash.length > 1 && !target) return;
+          e.preventDefault();
+          if (target instanceof HTMLDetailsElement) target.open = true;
+          const margin = target ? parseFloat(getComputedStyle(target).scrollMarginTop) || 0 : 0;
+          const from = scrollY;
+          const to = Math.max(0, Math.round(target ? target.getBoundingClientRect().top + scrollY - margin : 0));
+          const distance = Math.abs(to - from);
+          if (distance < 4) {
+            if (home) history.replaceState(null, "", location.pathname + location.search);
+            return;
+          }
+          const duration = Math.min(1500, 550 + distance * 0.45);
+          const mine = ++glide;
+          const t0 = performance.now();
+          const step = (now) => {
+            if (mine !== glide) return; // the visitor took over
+            const t = Math.min(1, (now - t0) / duration);
+            scrollTo({ top: from + (to - from) * easeInOut(t), behavior: "instant" });
+            if (t < 1) requestAnimationFrame(step);
+            else history.replaceState(null, "", hash.length > 1 ? hash : location.pathname + location.search);
+          };
+          requestAnimationFrame(step);
+        });
+      });
+
+      const motionButton = document.getElementById("motion-toggle");
+      const syncMotionButton = () =>
+        motionButton.setAttribute("aria-pressed", String(document.documentElement.dataset.motion === "full"));
+      syncMotionButton();
+      motionButton.addEventListener("click", () => {
+        const next = document.documentElement.dataset.motion === "calm" ? "full" : "calm";
+        document.documentElement.dataset.motion = next;
+        try {
+          localStorage.setItem("motion", next);
+        } catch {}
+        syncMotionButton();
+        window.dispatchEvent(new Event("motionchange"));
+      });
+
+      // ---- Theme change: an enchanted veil. Mist rolls out from the toggle with a cool glow along its
+      // front, and fae lights (the same kind as the wisp) wake in it as it passes, drift a little and
+      // fade, while the new theme is revealed behind the edge.
+
+      // A soft fog texture (fractal noise), rasterised once and tiled.
+      const fogTile = (warm) => {
+        const svg =
+          "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='600'><filter id='f' x='0' y='0' width='100%' height='100%'>" +
+          "<feTurbulence type='fractalNoise' baseFrequency='.007 .011' numOctaves='3' seed='" + Math.floor(Math.random() * 50) + "' stitchTiles='stitch'/>" +
+          "<feColorMatrix values='" + (warm ? "0 0 0 0 1  0 0 0 0 .78  0 0 0 0 .42" : "0 0 0 0 .70  0 0 0 0 .80  0 0 0 0 1") + "  2.1 0 0 0 -.78'/></filter>" +
+          "<rect width='100%' height='100%' filter='url(%23f)'/></svg>";
+        return `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E")}")`;
+      };
+
+      // warm: the dawn version, used going to the light theme (golden mist, amber lights, sun-rays).
+      const drawVeil = (ring, x, y, radius, progress, done, warm) => {
+        const [cr, cg, cb] = warm ? [255, 170, 55] : [150, 175, 255];
+        // fog: rolls in just ahead of the reveal edge and fades away as it reaches the page edges
+        const mist = document.createElement("div");
+        mist.style.cssText = "position:absolute;inset:0;overflow:hidden";
+        const fog = document.createElement("div");
+        fog.style.cssText = `position:absolute;inset:-320px;background-image:${fogTile(warm)};background-size:900px 600px`;
+        mist.appendChild(fog);
+        fog.animate([{ transform: "translate(0,0)" }, { transform: "translate(-320px,-70px)" }], { duration: 2600, easing: "linear", fill: "forwards" });
+        // a cool glow along the very front of the reveal
+        const rim = document.createElement("div");
+        rim.style.cssText = "position:absolute;inset:0";
+        // dawn only: sun-rays fanning out from the toggle, revealed with the front and then fading
+        const rays = document.createElement("div");
+        rays.style.cssText = `position:absolute;inset:0;background:repeating-conic-gradient(from ${Math.floor(Math.random() * 12)}deg at ${x}px ${y}px, rgba(255,196,96,.5) 0deg 2.2deg, transparent 2.2deg 10deg)`;
+        ring.append(mist, rim);
+        if (warm) ring.appendChild(rays);
+
+        // fae lights: scattered around the toggle; each wakes when the front reaches it
+        const motes = Array.from({ length: 70 }, () => {
+          const d = Math.sqrt(Math.random()) * radius * 0.92;
+          const a = Math.random() * 6.283;
+          return { d, px: x + Math.cos(a) * d, py: y + Math.sin(a) * d, size: 2 + Math.random() * 3.2, born: false };
+        }).filter((m) => m.px > -10 && m.py > -10 && m.px < innerWidth + 10 && m.py < innerHeight + 10);
+        let active = 0;
+        const wake = (m) => {
+          m.born = true;
+          const el = document.createElement("span");
+          const sz = m.size * 0.85;
+          // small glowing lights, the same as the ones the wisp sheds
+          el.style.cssText = `position:absolute;left:${m.px}px;top:${m.py}px;width:${sz}px;height:${sz}px;margin:${-sz / 2}px 0 0 ${-sz / 2}px;border-radius:50%;background:#fff;box-shadow:0 0 ${sz * 3}px ${sz}px color-mix(in srgb,var(--color-accent) 80%,transparent),0 0 ${sz * 8}px ${sz * 2}px color-mix(in srgb,var(--color-accent) 30%,transparent)`;
+          ring.appendChild(el);
+          active++;
+          const dx = (Math.random() - 0.5) * 30;
+          const dy = -(24 + Math.random() * 42);
+          el.animate(
+            [
+              { opacity: 0, transform: "translate(0,0) scale(.4)" },
+              { opacity: 1, transform: `translate(${dx * 0.3}px,${dy * 0.3}px) scale(1)`, offset: 0.25 },
+              { opacity: 0.8, transform: `translate(${dx * 0.7}px,${dy * 0.7}px) scale(.9)`, offset: 0.65 },
+              { opacity: 0, transform: `translate(${dx}px,${dy}px) scale(.5)` },
+            ],
+            { duration: 1500 + Math.random() * 1000, easing: "ease-out" },
+          ).finished.then(() => {
+            el.remove();
+            active--;
+          });
+        };
+
+        const tick = () => {
+          if (!ring.isConnected) return;
+          const p = progress();
+          const outer = radius * p;
+          const grad = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 600}px, #000 ${outer - 300}px, #000 ${outer - 20}px, transparent ${outer + 150}px)`;
+          mist.style.webkitMaskImage = grad;
+          mist.style.maskImage = grad;
+          mist.style.opacity = String((warm ? 0.65 : 0.5) * Math.min(1, (1 - p) / 0.35));
+          if (warm) {
+            const rg = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 480}px, #000 ${outer - 80}px, #000 ${outer - 10}px, transparent ${outer})`;
+            rays.style.webkitMaskImage = rg;
+            rays.style.maskImage = rg;
+            rays.style.opacity = String(Math.min(1, (1 - p) / 0.4));
+          }
+          const rimA = 0.55 * Math.min(1, (1 - p) / 0.25);
+          rim.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 46}px, rgba(${cr},${cg},${cb},${rimA}) ${outer - 5}px, rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${Math.min(255, cb + 0)},${rimA * 0.4}) ${outer + 3}px, transparent ${outer + 16}px)`;
+          for (const m of motes) if (!m.born && outer >= m.d) wake(m);
+          if (done() && active === 0) return ring.remove();
+          requestAnimationFrame(tick);
+        };
+        tick();
+      };
+
+      // Wheel, touch and scroll keys are held off while the change plays: the transition layers are
+      // frozen to the viewport, so scrolling under them glitches.
+      const SCROLL_KEYS = new Set([" ", "PageUp", "PageDown", "Home", "End", "ArrowUp", "ArrowDown"]);
+      const stopScroll = (e) => {
+        if (e.type !== "keydown" || SCROLL_KEYS.has(e.key)) e.preventDefault();
+      };
+      const lockScroll = (on) => {
+        const fn = on ? "addEventListener" : "removeEventListener";
+        for (const evt of ["wheel", "touchmove", "keydown"]) window[fn](evt, stopScroll, { passive: false });
+      };
+
+      // Everything the running theme transition added, so a new toggle can clear it: leftover layer
+      // names make the browser abort the next transition. The veil element itself is left to finish
+      // fading on its own (lights still drifting) unless a new toggle forces it away.
+      let vt = null;
+      const endVt = (force) => {
+        document.documentElement.classList.remove("vt-run");
+        lockScroll(false);
+        if (!vt) return;
+        vt.style?.remove();
+        vt.live?.forEach((el) => (el.style.viewTransitionName = ""));
+        if (vt.ring) {
+          vt.ring.style.viewTransitionName = "";
+          if (force) vt.ring.remove();
+        }
+        vt = null;
+      };
+
+      document.getElementById("theme-toggle").addEventListener("click", (e) => {
+        const flip = () => {
+          const isDark = document.documentElement.classList.toggle("dark");
+          try {
+            localStorage.setItem("theme", isDark ? "dark" : "light");
+          } catch {}
+          document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "light";
+        };
+        if (document.documentElement.dataset.motion === "calm") return flip();
+        if (vt) vt.transition?.skipTransition?.();
+        endVt(true);
+        document.querySelectorAll(".theme-veil").forEach((n) => n.remove());
+        const x = e.clientX;
+        const y = e.clientY;
+        const radius = Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y));
+        const DURATION = 1500;
+
+        // Going to light plays the dawn version, going to dark the moonlit one.
+        const warm = document.documentElement.classList.contains("dark");
+        // Colour transitions would be caught half-way by the snapshot and jump when it ends.
+        document.documentElement.classList.add("vt-run");
+        lockScroll(true);
+        const ring = document.createElement("div");
+        ring.className = "theme-veil";
+        ring.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646";
+
+        // No View Transitions (some browsers): the theme switches at once and the veil still rolls out
+        // over it, so the change is never a plain snap.
+        if (!document.startViewTransition) {
+          flip();
+          document.body.appendChild(ring);
+          vt = { ring };
+          const t0 = performance.now();
+          const prog = () => {
+            const t = Math.min(1, (performance.now() - t0) / DURATION);
+            return t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
+          };
+          drawVeil(ring, x, y, radius, prog, () => performance.now() - t0 >= DURATION, warm);
+          setTimeout(() => {
+            if (vt && vt.ring === ring) endVt(false);
+          }, DURATION + 100);
+          return;
+        }
+
+        // The page is a frozen snapshot outside the circle. Anything animated gets its own transition
+        // layer so it keeps moving, and (like the page) changes theme only where the circle has reached.
+        const live = [...document.querySelectorAll("[data-cover], .scribe, .wyv, .wisp-layer, #site-header")].map((el) =>
+          el.matches("[data-cover]") ? el.parentElement : el,
+        );
+        let css = "::view-transition-old(root),::view-transition-new(root){animation:none}";
+        live.forEach((el, i) => {
+          el.style.viewTransitionName = `live-${i}`;
+          css += `::view-transition-old(live-${i}){animation:none}::view-transition-new(live-${i}){animation:none}::view-transition-group(live-${i}){animation-duration:0s}`;
+        });
+        ring.style.viewTransitionName = "ring";
+        css += "::view-transition-old(ring){display:none}::view-transition-new(ring){animation:none}::view-transition-group(ring){animation-duration:0s}";
+        const style = document.createElement("style");
+        style.textContent = css;
+        document.head.appendChild(style);
+        document.body.appendChild(ring);
+
+        const transition = document.startViewTransition(flip);
+        vt = { transition, live, style, ring };
+        transition.ready.then(() => {
+          const clip = { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] };
+          const timing = { duration: DURATION, easing: "cubic-bezier(.45,.05,.3,1)", fill: "forwards" };
+          const reveal = document.documentElement.animate(clip, { ...timing, pseudoElement: "::view-transition-new(root)" });
+          live.forEach((_, i) =>
+            document.documentElement.animate(clip, { ...timing, pseudoElement: `::view-transition-new(live-${i})` }),
+          );
+          drawVeil(ring, x, y, radius, () => reveal.effect.getComputedTiming().progress ?? 1, () => reveal.playState === "finished", warm);
+        });
+        transition.finished.finally(() => {
+          if (vt && vt.transition === transition) endVt(false);
+        });
       });
 
       // Compact the header on scroll: shrink padding, collapse nav labels
@@ -141,10 +421,8 @@ const nav = [
           el.style.width = scrolled ? "0px" : el.scrollWidth + "px";
           el.style.opacity = scrolled ? "0" : "1";
         });
-        siteHeader.classList.toggle("bg-white/90", !scrolled);
-        siteHeader.classList.toggle("dark:bg-neutral-950/90", !scrolled);
-        siteHeader.classList.toggle("bg-white/40", scrolled);
-        siteHeader.classList.toggle("dark:bg-neutral-950/40", scrolled);
+        siteHeader.classList.toggle("bg-bar/90", !scrolled);
+        siteHeader.classList.toggle("bg-bar/40", scrolled);
       };
       window.addEventListener("scroll", onScroll, { passive: true });
       window.addEventListener("resize", onScroll);

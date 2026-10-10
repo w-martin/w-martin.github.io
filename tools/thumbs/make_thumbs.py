@@ -26,7 +26,10 @@ PAGE_W, PAGE_H = (
     550,
 )  # the post body at this width, cropped to the 4:5 thumbnail ratio
 THUMB = (192, 240)  # 3x the 64x80 CSS box
-BG = {"light": "#fff", "dark": "#171717"}
+THEMES = (
+    "light",
+    "dark",
+)  # rendered on transparent, so the page background shows through
 VOID = {
     "area",
     "base",
@@ -122,12 +125,12 @@ def main() -> None:
     )
     try:
         for post_id, body in parser.bodies.items():
-            for theme, bg in BG.items():
+            for theme in THEMES:
                 page = DIST / f"_thumb-{post_id}-{theme}.html"
                 page.write_text(
                     f'<!doctype html><html lang="en" class="{"dark" if theme == "dark" else ""}"><head>'
                     f'<meta charset="utf-8"><link rel="stylesheet" href="{css}">'
-                    f"<style>html,body{{margin:0;background:{bg}}}</style></head>"
+                    f"<style>html,body{{margin:0;background:transparent!important}}</style></head>"
                     f'<body class="font-serif text-body"><div style="width:{PAGE_W}px" '
                     f'class="prose prose-neutral dark:prose-invert max-w-none '
                     f'prose-headings:font-sans prose-a:text-accent">{body}</div></body></html>'
@@ -137,17 +140,17 @@ def main() -> None:
                     subprocess.run(
                         [
                             chrome, "--headless=new", "--disable-gpu", "--hide-scrollbars",
-                            "--window-size=520,700", "--virtual-time-budget=4000",
+                            "--window-size=520,700", "--virtual-time-budget=4000", "--default-background-color=00000000",
                             f"--screenshot={shot}", f"http://localhost:4577/{page.name}",
                         ],
                         check=True,
                         capture_output=True,
                     )  # fmt: skip
-                    img = Image.open(shot).convert("RGB").crop((0, 0, PAGE_W, PAGE_H))
+                    img = Image.open(shot).convert("RGBA").crop((0, 0, PAGE_W, PAGE_H))
                 page.unlink()
                 dest = OUT / f"{post_id}-{theme}.webp"
                 img.resize(THUMB, Image.LANCZOS).save(
-                    dest, "WEBP", quality=80, method=6
+                    dest, "WEBP", quality=80, method=6, alpha_quality=70
                 )
                 print(f"{dest.relative_to(ROOT)}: {dest.stat().st_size:,} B")
     finally:
