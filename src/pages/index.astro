@@ -58,7 +58,7 @@ const software = [
   {
     name: "typedframes",
     blurb:
-      "A Rust-fast static analysis linter for pandas/polars DataFrames. Catches column-access errors at lint time, with an opt-in coverage gate for CI.",
+      "A linter for pandas and polars DataFrames, written in Rust. It catches wrong column names before the code runs, and can fail CI when too little of your code has been checked.",
     links: [
       { label: "GitHub", href: "https://github.com/w-martin/typedframes" },
       { label: "PyPI", href: "https://pypi.org/project/typedframes/" },
@@ -89,10 +89,10 @@ const posts = await Promise.all(
 
 <Base title="Home">
   <!-- First-draft copy -- edit freely. -->
-  <h1 class="font-sans text-3xl font-bold text-black dark:text-white mb-3">Music, tools and notes.</h1>
+  <h1 class="font-sans text-3xl font-bold text-black dark:text-white mb-3">Music, tools and machine learning.</h1>
 
   <p class="mb-6">
-    Made by Will Martin: computer scientist, solo guitarist, tool builder and machine learner.
+    This page collects what I make: software, music, and the odd blog post.
   </p>
 
   <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-16">
@@ -136,6 +136,7 @@ const posts = await Promise.all(
       {covers.map((cover) => (
         <article
           class="bandcamp-embed"
+          data-glow={cover.consume}
           data-src={`https://bandcamp.com/EmbeddedPlayer/track=${cover.track}/size=large/bgcol=ffffff/linkcol=2079c7/tracklist=false/artwork=small/transparent=true/`}
           data-title={`${cover.title}: Bandcamp player`}
         >

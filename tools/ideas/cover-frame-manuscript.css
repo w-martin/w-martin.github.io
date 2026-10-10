@@ -1,0 +1,50 @@
+/* Parked idea: illuminated-manuscript border for the covers. Paste into src/styles/global.css to restore;
+   the cover <article> also needs data-glow={cover.consume}. */
+/* Cover frames: an illuminated-manuscript border drawn over the art (and over the fire and ice
+   effects, so the covers read as windows into those worlds): a double rule in muted gold with a knotwork
+   flourish at each corner, and a faint inner glow in the art's own colour (ember / ice) that warms on hover. */
+.bandcamp-embed .group {
+  --glow: rgba(255, 255, 255, 0.14);
+}
+
+.bandcamp-embed[data-glow="fire"] .group {
+  --glow: rgba(255, 150, 60, 0.4);
+}
+
+.bandcamp-embed[data-glow="ice"] .group {
+  --glow: rgba(160, 210, 255, 0.4);
+}
+
+.bandcamp-embed .group::before,
+.bandcamp-embed .group::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+  border-radius: 2px;
+}
+
+/* the inner rule, with the glow just inside it */
+.bandcamp-embed .group::before {
+  inset: 12px;
+  border: 1px solid rgba(210, 173, 90, 0.85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 22px 4px var(--glow);
+  transition: box-shadow 0.4s ease;
+}
+
+/* the outer rule and the four corner flourishes */
+.bandcamp-embed .group::after {
+  inset: 6px;
+  border: 1.5px solid rgba(210, 173, 90, 0.95);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") top left / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%2834 0%29 scale%28-1 1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") top right / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%280 34%29 scale%281 -1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") bottom left / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%2834 34%29 scale%28-1 -1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") bottom right / 34px 34px no-repeat;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
+}
+
+.bandcamp-embed .group:hover::before {
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 34px 8px var(--glow);
+}

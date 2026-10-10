@@ -1,4 +1,4 @@
-import { calm, every, injectStyle, onOpen, rand, turn, whenVisible } from "./shared";
+import { calm, every, injectStyle, onOpen, rand, sleep, turn, whenVisible } from "./shared";
 
 // A small Celtic-style wyvern that glides in, lands on the top edge of the player box, idles, and
 // flies off. The flap is three wing poses cycled with CSS; the flight is a few Bezier legs.
@@ -32,8 +32,7 @@ const PERCH = `<svg class="perch" viewBox="0 0 62 84" overflow="visible">
 <path d="M24 71 l8 0 M24 71 l-2 3 M28 71 l0 3 M32 71 l-1 3 M42 71 l8 0 M42 71 l-2 3 M46 71 l0 3 M50 71 l-1 3"/></svg>`;
 
 const CSS = `
-main{overflow-x:clip}
-.wyv{position:absolute;left:0;top:0;width:60px;height:39px;pointer-events:none;visibility:hidden;will-change:transform}
+.wyv{position:absolute;left:0;top:0;width:60px;height:39px;pointer-events:none;visibility:hidden;will-change:transform;z-index:50}
 .wyv svg{position:absolute;display:block}
 .wyv svg *{fill:none;stroke:var(--color-body);stroke-width:1.3px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .wyv svg .dot{fill:var(--color-body);stroke:none}
@@ -91,12 +90,21 @@ export function mountWyvern(box: HTMLElement) {
   el.className = "wyv perched";
   el.setAttribute("aria-hidden", "true");
   el.innerHTML = FLY + PERCH;
-  box.appendChild(el);
+  // It lives in the section's heading, which stays visible when the section is collapsed.
+  const head = box.querySelector<HTMLElement>(":scope > summary") ?? box;
+  if (getComputedStyle(head).position === "static") head.style.position = "relative";
+  head.appendChild(el);
+  const details = box as HTMLDetailsElement;
 
   // It lives on the page: perched somewhere, and every so often flying to another perch. It never
   // leaves the screen. A perch is the player box's top edge, a cover's top edge, a "Listen on" button
   // or the Music heading's rule, whichever are on screen.
   const pickPerch = (r: DOMRect, start = false) => {
+    // Collapsed: the only place left is the heading's own rule.
+    if (!details.open) {
+      const hb = head.getBoundingClientRect();
+      return { px: hb.width * rand(0.3, 0.8) - 30, py: hb.height - 37 };
+    }
     // The player box's top edge is the favourite perch. (The dragon lives on the Music section, since
     // loading a song replaces the player's contents.)
     const pr = document.getElementById("bandcamp-player")?.getBoundingClientRect();
@@ -186,6 +194,57 @@ export function mountWyvern(box: HTMLElement) {
     }
   };
 
+  // Idle scenes while perched: curls up and sleeps, stretches its wings, yawns, or watches the wisp.
+  const part = (cls: string) => el.querySelector<SVGElement>(`.perch ${cls}`)!;
+  const puff = (dx: number, dy: number, big = 1) => {
+    const o = document.createElement("span");
+    o.style.cssText = `position:absolute;left:${dx}px;top:${dy}px;width:${6 * big}px;height:${6 * big}px;border:1px solid var(--color-body);border-radius:50%;pointer-events:none`;
+    el.appendChild(o);
+    o.animate(
+      [
+        { opacity: 0.8, transform: "translate(0,0) scale(.6)" },
+        { opacity: 0, transform: `translate(${rand(-3, 6)}px,${-rand(14, 26)}px) scale(${1.8 * big})` },
+      ],
+      { duration: rand(1600, 2400), easing: "ease-out" },
+    ).finished.then(() => o.remove());
+  };
+  const hold = (a: Animation) => a.finished.catch(() => undefined);
+  const SCENES = ["sleep", "stretch", "yawn", "watch"] as const;
+  const scene = async () => {
+    if (calm() || el.classList.contains("flap") || el.classList.contains("glide")) return;
+    const name = SCENES[Math.floor(Math.random() * SCENES.length)];
+    const head = part(".phead");
+    const wing = part(".pwing");
+    // the perched sprite faces left by default; scaleX(-1) on the wrapper flips it
+    if (name === "sleep") {
+      const dip = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(-30deg) translate(-1px,5px)", offset: 0.15 }, { transform: "rotate(-30deg) translate(-1px,5px)", offset: 0.92 }, { transform: "rotate(0)" }], { duration: 15000, easing: "ease-in-out" });
+      const tuck = wing.animate([{ transform: "scale(1)" }, { transform: "scale(.82,.9) translate(2px,2px)", offset: 0.15 }, { transform: "scale(.82,.9) translate(2px,2px)", offset: 0.92 }, { transform: "scale(1)" }], { duration: 15000, easing: "ease-in-out" });
+      for (let i = 1; i <= 4; i++) setTimeout(() => puff(16, 10), i * 3000);
+      await Promise.all([hold(dip), hold(tuck)]);
+    } else if (name === "stretch") {
+      const spread = wing.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.35 }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.7 }, { transform: "rotate(6deg) scale(1)", offset: 0.85 }, { transform: "rotate(0) scale(1)" }], { duration: 4200, easing: "ease-in-out" });
+      const lift = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.35 }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.7 }, { transform: "rotate(0)" }], { duration: 4200, easing: "ease-in-out" });
+      await Promise.all([hold(spread), hold(lift)]);
+    } else if (name === "yawn") {
+      const gape = head.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(16deg) scale(1.12) translate(0,-2px)", offset: 0.3 }, { transform: "rotate(16deg) scale(1.12) translate(0,-2px)", offset: 0.65 }, { transform: "rotate(0) scale(1)" }], { duration: 3200, easing: "ease-in-out" });
+      setTimeout(() => puff(6, 6, 1.4), 1000);
+      setTimeout(() => puff(4, 4, 1.1), 1500);
+      await hold(gape);
+      await head.animate([{ transform: "rotate(0)" }, { transform: "rotate(-5deg)", offset: 0.4 }, { transform: "rotate(0)" }], { duration: 700 }).finished.catch(() => undefined);
+    } else {
+      // watch: turns its head toward the wisp for a few seconds
+      const w = document.querySelector<HTMLElement>(".wisp .core")?.getBoundingClientRect();
+      const me = el.getBoundingClientRect();
+      const toward = w ? Math.sign(w.left - me.left) : 1;
+      const faceDir = el.style.transform.includes("scaleX(-1)") ? 1 : -1; // which way the sprite looks
+      const ang = toward === faceDir ? -10 : 18;
+      const look = head.animate([{ transform: "rotate(0)" }, { transform: `rotate(${ang}deg)`, offset: 0.2 }, { transform: `rotate(${ang * 0.4}deg)`, offset: 0.5 }, { transform: `rotate(${ang}deg)`, offset: 0.75 }, { transform: "rotate(0)" }], { duration: 6500, easing: "ease-in-out" });
+      await hold(look);
+    }
+    await sleep(600);
+  };
+  const act = () => turn(Math.random() < 0.55 ? scene : fly);
+
   window.addEventListener("motionchange", () => {
     if (!calm()) return;
     // Stop wherever it is; it settles there until full motion comes back.
@@ -195,7 +254,12 @@ export function mountWyvern(box: HTMLElement) {
   });
 
   const visible = whenVisible(box, () => {});
-  every(visible, 14, 26, () => turn(fly), rand(7, 11));
+  every(visible, 12, 22, act, rand(6, 10));
   onOpen(box.closest("details"), () => turn(fly));
-  (el as HTMLElement & { play?: () => Promise<unknown> }).play = () => turn(fly);
+  // Collapsing the section sends it up to the top line as the content folds away.
+  details.addEventListener("toggle", () => {
+    if (!details.open) turn(fly);
+  });
+  (el as HTMLElement & { play?: () => Promise<unknown>; scene?: () => Promise<unknown> }).play = () => turn(fly);
+  (el as HTMLElement & { scene?: () => Promise<unknown> }).scene = () => turn(scene);
 }

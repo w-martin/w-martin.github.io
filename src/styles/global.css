@@ -58,7 +58,7 @@
   /* Link text and other emphasis: darker than the body grey, so it stays readable on the paper. */
   --color-ink: #1d1b18;
   /* The tint behind links and toolbar items: candle-amber on the warm paper (blue in dark mode). */
-  --color-wash: #c08a2e;
+  --color-wash: #a9824a;
   --color-bar: #dfdfdc;
   --color-body: #454545;
   --color-rule: #b3b3af;
@@ -271,7 +271,7 @@ main > details[open] > summary::before {
   padding: 0.05em 0.3em;
   margin: 0 -0.1em;
   border-radius: 0.35em;
-  background-color: color-mix(in srgb, var(--color-wash) 22%, transparent);
+  background-color: color-mix(in srgb, var(--color-wash) 13%, transparent);
   transition: background-color 0.25s ease, text-shadow 0.25s ease;
 }
 
@@ -279,7 +279,7 @@ main > details[open] > summary::before {
 .link:focus-visible,
 .prose a:hover,
 .prose a:focus-visible {
-  background-color: color-mix(in srgb, var(--color-wash) 40%, transparent);
+  background-color: color-mix(in srgb, var(--color-wash) 26%, transparent);
   text-shadow: 0 0 12px color-mix(in srgb, var(--color-wash) 60%, transparent);
 }
 
@@ -292,6 +292,164 @@ main > details[open] > summary::before {
 .bar-link:hover,
 .bar-link:focus-visible {
   color: var(--color-ink);
-  background-color: color-mix(in srgb, var(--color-wash) 30%, transparent);
+  background-color: color-mix(in srgb, var(--color-wash) 20%, transparent);
   text-shadow: 0 0 12px color-mix(in srgb, var(--color-wash) 60%, transparent);
+}
+
+/* Cover frames. Chosen with html[data-frame] (set from ?frame=name, remembered in localStorage). `outer` is drawn
+   entirely outside the cover, so the art keeps its full size; the others overlay the cover's edges. They sit inside the cover (above
+   the art and the fire and ice effects), so the covers read as windows into those worlds. */
+[data-cover] {
+  --glow: rgba(255, 255, 255, 0.14);
+}
+
+[data-cover][data-consume="fire"] {
+  --glow: rgba(255, 150, 60, 0.42);
+  --f1: #4a1c0c;
+  --f2: #c8601c;
+  --f3: #f7bd68;
+  --line: rgba(247, 168, 84, 0.95);
+}
+
+[data-cover][data-consume="ice"] {
+  --glow: rgba(160, 210, 255, 0.42);
+  --f1: #2d4a68;
+  --f2: #8db8de;
+  --f3: #f0f8ff;
+  --line: rgba(205, 232, 255, 0.95);
+}
+
+html[data-frame] [data-cover]::before,
+html[data-frame] [data-cover]::after {
+  content: "";
+  position: absolute;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* --- manuscript: a double gold rule with a knotwork flourish in each corner */
+html[data-frame="manuscript"] [data-cover]::before {
+  inset: 12px;
+  border: 1px solid rgba(210, 173, 90, 0.85);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.35), inset 0 0 22px 4px var(--glow);
+}
+
+html[data-frame="manuscript"] [data-cover]::after {
+  inset: 6px;
+  border: 1.5px solid rgba(210, 173, 90, 0.95);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+  background:
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") top left / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%2834 0%29 scale%28-1 1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") top right / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%280 34%29 scale%281 -1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") bottom left / 34px 34px no-repeat,
+    url("data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2234%22 height=%2234%22 viewBox=%220 0 34 34%22%3E%3Cg transform=%22translate%2834 34%29 scale%28-1 -1%29%22 fill=%22none%22 stroke=%22%23d2ad5a%22 stroke-width=%221.5%22 stroke-linecap=%22round%22 stroke-linejoin=%22round%22%3E%3Cpath d=%22M2 32V12Q2 2 12 2H32%22/%3E%3Cpath d=%22M8 8c0-3 5-3 5 0s-5 5-5 2%22/%3E%3Cpath d=%22M13 13l6 0M13 13l0 6%22/%3E%3Cpath d=%22M20 2q3 4 0 8M2 20q4 3 8 0%22/%3E%3Ccircle cx=%2225%22 cy=%229%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3Ccircle cx=%229%22 cy=%2225%22 r=%221.2%22 fill=%22%23d2ad5a%22 stroke=%22none%22/%3E%3C/g%3E%3C/svg%3E") bottom right / 34px 34px no-repeat;
+  filter: drop-shadow(0 0 1px rgba(0, 0, 0, 0.7));
+}
+
+/* --- stone: a dark chiselled stone surround, like the arch of an old doorway */
+html[data-frame="stone"] [data-cover] {
+  border-radius: 3px;
+}
+
+html[data-frame="stone"] [data-cover]::after {
+  inset: 0;
+  box-shadow: inset 0 0 0 13px #2b2a2e, inset 0 0 0 14px rgba(255, 255, 255, 0.16), inset 0 0 0 15px rgba(0, 0, 0, 0.6), inset 0 0 22px 15px rgba(0, 0, 0, 0.5);
+}
+
+html[data-frame="stone"] [data-cover]::before {
+  inset: 0;
+  z-index: 6;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
+  background: radial-gradient(circle at 20% 15%, rgba(255, 255, 255, 0.07), transparent 40%) , radial-gradient(circle at 85% 90%, rgba(0, 0, 0, 0.3), transparent 45%);
+  mask: linear-gradient(#000 0 0) border-box, linear-gradient(#000 0 0) content-box;
+  mask-composite: exclude;
+  padding: 13px;
+}
+
+/* --- parchment: a torn, ragged mat of old paper around the art */
+html[data-frame="parchment"] [data-cover] {
+  border-radius: 0;
+}
+
+html[data-frame="parchment"] [data-cover]::after {
+  inset: 0;
+  box-shadow: inset 0 0 0 12px #cdb98a, inset 0 0 14px 12px rgba(120, 90, 40, 0.55);
+  filter: url(#rough);
+}
+
+html[data-frame="parchment"] [data-cover]::before {
+  inset: 13px;
+  border: 1px solid rgba(60, 40, 15, 0.55);
+  z-index: 6;
+}
+
+/* --- vignette: no border at all; the edges sink into shadow behind a thin inked line */
+html[data-frame="vignette"] [data-cover]::after {
+  inset: 0;
+  box-shadow: inset 0 0 70px 20px rgba(8, 6, 4, 0.78);
+}
+
+html[data-frame="vignette"] [data-cover]::before {
+  inset: 8px;
+  border: 1px solid rgba(235, 220, 185, 0.55);
+  border-radius: 2px;
+  z-index: 6;
+}
+
+/* --- metal: a burnished frame in the cover's own colours (copper and ember for The Ladder, frosted
+   silver-blue for Flight), with a dark inner lip and a faint glow inside */
+html[data-frame="metal"] [data-cover]::after {
+  inset: 0;
+  border-radius: inherit;
+  padding: 9px;
+  background: linear-gradient(135deg, var(--f1), var(--f2) 20%, var(--f1) 42%, var(--f3) 60%, var(--f1) 80%, var(--f2));
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask: linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0);
+}
+
+html[data-frame="metal"] [data-cover]::before {
+  inset: 9px;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55), inset 0 0 20px 3px var(--glow);
+}
+
+/* --- rule: a double hairline in the cover's colour, and the glow */
+html[data-frame="rule"] [data-cover]::after {
+  inset: 6px;
+  border: 1.5px solid var(--line);
+  border-radius: 3px;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.4);
+}
+
+html[data-frame="rule"] [data-cover]::before {
+  inset: 12px;
+  border: 1px solid var(--line);
+  border-radius: 2px;
+  opacity: 0.7;
+  box-shadow: inset 0 0 22px 4px var(--glow);
+}
+
+/* --- glow: no lines; just the cover's colour glowing inward from the edge */
+html[data-frame="glow"] [data-cover]::after {
+  inset: 0;
+  border-radius: inherit;
+  box-shadow: inset 0 0 0 1px var(--line), inset 0 0 30px 8px var(--glow);
+}
+
+/* the creatures sit above everything: covers, frames and effects */
+
+/* --- outer: a single hairline in the cover's own colour (copper for The Ladder, silver-blue for Flight),
+   floating just outside the art with a hair of gap, and a soft glow beyond. Nothing touches the art. */
+html[data-frame="outer"] [data-cover] {
+  box-shadow: 0 0 22px 6px var(--glow);
+  outline: 1px solid var(--line);
+  outline-offset: 4px;
+}
+
+/* The creatures roam across the page and can drift past its edges. Clip sideways overflow at the very
+   edge of the page (clip, not hidden, so the sticky header still works), not at the narrow content
+   column, which would also cut off the covers' glow. */
+body {
+  overflow-x: clip;
 }

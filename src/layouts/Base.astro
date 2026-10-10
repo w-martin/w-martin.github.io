@@ -45,6 +45,20 @@ const nav = [
     <link rel="preload" href={merriweatherRegular} as="font" type="font/woff2" crossorigin />
     <link rel="preload" href={openSans} as="font" type="font/woff2" crossorigin />
     <script is:inline>
+      // Cover frame chosen with ?frame=name (outer, metal, rule, glow, manuscript, stone, parchment, vignette, off).
+      (function () {
+        try {
+          // A new key, so choices saved while earlier candidates were being tried don't hide the default.
+          const f = new URLSearchParams(location.search).get("frame");
+          if (f) localStorage.setItem("frame2", f);
+          const saved = localStorage.getItem("frame2") || "outer";
+          if (saved !== "off") document.documentElement.dataset.frame = saved;
+        } catch {
+          document.documentElement.dataset.frame = "outer";
+        }
+      })();
+    </script>
+    <script is:inline>
       // Set theme before paint, to avoid a flash of the wrong theme.
       (function () {
         document.documentElement.classList.add("js");
@@ -61,7 +75,9 @@ const nav = [
             : window.matchMedia("(prefers-reduced-motion: reduce)").matches
               ? "calm"
               : "full";
-        const dark = stored === "dark" || (!stored && prefersDark);
+        const prefersLight = window.matchMedia("(prefers-color-scheme: light)").matches;
+        // a saved choice wins; otherwise follow the device setting, and fall back to dark if it has none
+        const dark = stored === "dark" || (!stored && (prefersDark || !prefersLight));
         if (dark) document.documentElement.classList.add("dark");
         // Declare only the scheme in use: "light dark" lets Samsung Internet
         // decide the page already handles dark and skip its own handling wrongly.
@@ -70,6 +86,7 @@ const nav = [
     </script>
   </head>
   <body class="min-h-screen flex flex-col bg-paper transition-colors">
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true"><filter id="rough" x="-5%" y="-5%" width="110%" height="110%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="3" seed="3" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter></svg>
     <header id="site-header" class="no-anim sticky top-0 z-10 border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
         <a href="/" class="bar-link font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
@@ -221,7 +238,7 @@ const nav = [
         return `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E")}")`;
       };
 
-      // warm: the dawn version, used going to the light theme (golden mist, amber lights, sun-rays).
+      // warm: the dawn version, used going to the light theme (golden mist and glow).
       const drawVeil = (ring, x, y, radius, progress, done, warm) => {
         const [cr, cg, cb] = warm ? [255, 170, 55] : [150, 175, 255];
         // fog: rolls in just ahead of the reveal edge and fades away as it reaches the page edges
@@ -234,11 +251,7 @@ const nav = [
         // a cool glow along the very front of the reveal
         const rim = document.createElement("div");
         rim.style.cssText = "position:absolute;inset:0";
-        // dawn only: sun-rays fanning out from the toggle, revealed with the front and then fading
-        const rays = document.createElement("div");
-        rays.style.cssText = `position:absolute;inset:0;background:repeating-conic-gradient(from ${Math.floor(Math.random() * 12)}deg at ${x}px ${y}px, rgba(255,196,96,.5) 0deg 2.2deg, transparent 2.2deg 10deg)`;
         ring.append(mist, rim);
-        if (warm) ring.appendChild(rays);
 
         // fae lights: scattered around the toggle; each wakes when the front reaches it
         const motes = Array.from({ length: matchMedia("(pointer: coarse)").matches ? 28 : 70 }, () => {
@@ -279,12 +292,6 @@ const nav = [
           mist.style.webkitMaskImage = grad;
           mist.style.maskImage = grad;
           mist.style.opacity = String((warm ? 0.65 : 0.5) * Math.min(1, (1 - p) / 0.35));
-          if (warm) {
-            const rg = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 480}px, #000 ${outer - 80}px, #000 ${outer - 10}px, transparent ${outer})`;
-            rays.style.webkitMaskImage = rg;
-            rays.style.maskImage = rg;
-            rays.style.opacity = String(Math.min(1, (1 - p) / 0.4));
-          }
           const rimA = 0.55 * Math.min(1, (1 - p) / 0.25);
           rim.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 46}px, rgba(${cr},${cg},${cb},${rimA}) ${outer - 5}px, rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${Math.min(255, cb + 0)},${rimA * 0.4}) ${outer + 3}px, transparent ${outer + 16}px)`;
           // they wake just ahead of the edge, so each is already glowing as the front reaches it

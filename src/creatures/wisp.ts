@@ -11,8 +11,7 @@ const SPARK = `<svg viewBox="0 0 24 24" width="22" height="22"><g class="spin"><
 const MOTE = `<svg viewBox="0 0 10 10" width="9" height="9"><path d="M5 0.8v8.4M0.8 5h8.4"/></svg>`;
 
 const CSS = `
-main{overflow-x:clip}
-.wisp-layer{position:absolute;inset:0;pointer-events:none}
+.wisp-layer{position:absolute;inset:0;pointer-events:none;z-index:50}
 .wisp-layer svg{display:block;overflow:visible}
 .wisp-layer svg *{fill:none;stroke:var(--color-body);stroke-width:1.2px;stroke-linecap:round;vector-effect:non-scaling-stroke}
 .wisp-layer svg .dot{fill:var(--color-body);stroke:none}
@@ -47,11 +46,22 @@ export function mountWisp(section: HTMLElement) {
   el.className = "wisp";
   el.innerHTML = `<div class="lamp"></div><div class="core">${SPARK}</div>`;
   layer.appendChild(el);
-  section.appendChild(layer);
+  // It lives in the heading, which stays visible when the section is collapsed.
+  const head = section.querySelector<HTMLElement>(":scope > summary") ?? section;
+  if (getComputedStyle(head).position === "static") head.style.position = "relative";
+  head.appendChild(layer);
+  const details = section as HTMLDetailsElement;
   const core = el.querySelector<HTMLElement>(".core")!;
   const lamp = el.querySelector<HTMLElement>(".lamp")!;
 
+  // Collapsed: it hangs just past the heading's words on the top line.
+  const topSpot = (): P => {
+    const hb = head.getBoundingClientRect();
+    return [Math.min(hb.width - 30, 190), hb.height / 2];
+  };
+
   const stops = (): P[] => {
+    if (!details.open) return [topSpot()];
     const box = section.getBoundingClientRect();
     return [...section.querySelectorAll<HTMLElement>("h3")].map((h) => {
       const r = h.getBoundingClientRect();
@@ -90,10 +100,13 @@ export function mountWisp(section: HTMLElement) {
 
   const drift = async () => {
     const s = stops();
-    if (calm() || s.length < 2) return;
-    // It favours the top of the section: half the time it heads back to the first project.
-    let next = Math.random() < 0.5 ? 0 : Math.floor(Math.random() * s.length);
-    if (next === at) next = (next + 1) % s.length;
+    const closed = !details.open;
+    if (calm() || (!closed && s.length < 2)) return;
+    // It favours the top of the section: half the time it heads back to the first project. Collapsed,
+    // it just goes to the top line.
+    let next = closed ? 0 : Math.random() < 0.5 ? 0 : Math.floor(Math.random() * s.length);
+    if (!closed && next === at) next = (next + 1) % s.length;
+    if (closed && Math.hypot(s[0][0] - pos[0], s[0][1] - pos[1]) < 12) return;
     const [x1, y1] = pos;
     const [x2, y2] = s[next];
     const dist = Math.hypot(x2 - x1, y2 - y1);
@@ -165,9 +178,76 @@ export function mountWisp(section: HTMLElement) {
     }
   };
 
+  // The pointer, for the "peek" scene (desktop only).
+  let mouse: P | null = null;
+  addEventListener("pointermove", (e) => {
+    if (e.pointerType === "mouse") mouse = [e.clientX, e.clientY];
+  });
+
+  // Idle scenes: splits in two and rejoins, traces a loop round where it is, dims and rests, or leans
+  // toward the cursor.
+  const SCENES = ["split", "loop", "rest", "peek"] as const;
+  const scene = async () => {
+    if (calm()) return;
+    const name = SCENES[Math.floor(Math.random() * SCENES.length)];
+    if (name === "split") {
+      const twin = core.cloneNode(true) as HTMLElement;
+      twin.style.animation = "none";
+      twin.querySelectorAll<SVGElement>("*").forEach((n) => (n.style.animation = "none"));
+      el.appendChild(twin);
+      const orbit = (sign: number, r: number) =>
+        Array.from({ length: 41 }, (_, i) => {
+          const t = i / 40;
+          const grow = Math.sin(t * Math.PI); // out and back
+          const a = sign * t * 6.283 * 2.5;
+          return { transform: `translate(${Math.cos(a) * r * grow}px,${Math.sin(a) * r * grow * 0.6}px)`, offset: t };
+        });
+      const a = core.animate(orbit(1, 26), { duration: 5200, easing: "ease-in-out" });
+      const b = twin.animate(orbit(-1, 26), { duration: 5200, easing: "ease-in-out" });
+      await Promise.all([a.finished, b.finished]).catch(() => undefined);
+      twin.remove();
+    } else if (name === "loop") {
+      const keys = Array.from({ length: 49 }, (_, i) => {
+        const t = i / 48;
+        const a = t * 6.283 - 1.57;
+        return { transform: `translate(${Math.cos(a) * 34}px,${(Math.sin(a) + 1) * 20}px)`, offset: t };
+      });
+      for (let i = 0; i < 20; i++) {
+        setTimeout(() => {
+          const t = i / 19;
+          const a = t * 6.283 - 1.57;
+          mote(pos[0] + Math.cos(a) * 34, pos[1] + (Math.sin(a) + 1) * 20 - 6);
+        }, (i / 19) * 4200);
+      }
+      await core.animate(keys, { duration: 4400, easing: "ease-in-out" }).finished.catch(() => undefined);
+    } else if (name === "rest") {
+      const dim = [{ opacity: 1 }, { opacity: 0.18, offset: 0.2 }, { opacity: 0.18, offset: 0.8 }, { opacity: 1 }];
+      const a = core.animate(dim, { duration: 9000, easing: "ease-in-out" });
+      const b = lamp.animate([{ opacity: 0.45 }, { opacity: 0.05, offset: 0.2 }, { opacity: 0.05, offset: 0.8 }, { opacity: 0.45 }], { duration: 9000, easing: "ease-in-out" });
+      await Promise.all([a.finished, b.finished]).catch(() => undefined);
+    } else {
+      if (!mouse) return;
+      const me = core.getBoundingClientRect();
+      let dx = mouse[0] - (me.left + me.width / 2);
+      let dy = mouse[1] - (me.top + me.height / 2);
+      const d = Math.hypot(dx, dy) || 1;
+      const reach = Math.min(46, d * 0.25);
+      dx = (dx / d) * reach;
+      dy = (dy / d) * reach;
+      await core
+        .animate([{ transform: "translate(0,0)" }, { transform: `translate(${dx}px,${dy}px)`, offset: 0.3 }, { transform: `translate(${dx * 0.9}px,${dy * 0.9}px)`, offset: 0.7 }, { transform: "translate(0,0)" }], { duration: 4500, easing: "ease-in-out" })
+        .finished.catch(() => undefined);
+    }
+  };
+  const act = () => turn(Math.random() < 0.5 ? scene : drift);
+
   const visible = whenVisible(section, () => {});
-  every(visible, 18, 34, () => turn(drift), rand(14, 20));
-  every(visible, 11, 24, () => turn(spin), rand(8, 12));
+  every(visible, 10, 20, act, rand(11, 16));
+  every(visible, 24, 40, () => turn(spin), rand(18, 26));
   onOpen(section as HTMLDetailsElement, () => turn(drift));
-  (el as HTMLElement & { play?: () => Promise<unknown> }).play = () => turn(drift);
+  details.addEventListener("toggle", () => {
+    if (!details.open) turn(drift);
+  });
+  (el as HTMLElement & { play?: () => Promise<unknown>; scene?: () => Promise<unknown> }).play = () => turn(drift);
+  (el as HTMLElement & { scene?: () => Promise<unknown> }).scene = () => turn(scene);
 }
