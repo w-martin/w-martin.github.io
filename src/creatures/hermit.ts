@@ -29,11 +29,11 @@ const CSS = `
 .scribe[data-scene=fire] .p-fire{display:block;left:42px;bottom:0;animation:sc-in 1.6s ease-out}
 .scribe[data-scene=tea] .p-pot{display:block;left:42px;bottom:0;animation:sc-in 1.2s ease-out}
 .scribe[data-scene=stars] .p-stars{display:block;left:6px;top:-26px;width:56px;height:20px}
-.scribe[data-scene=nap] .p-zs{display:block;left:26px;top:-6px}
+.scribe[data-scene=nap] .p-zs{display:block;left:46px;top:-4px}
 .scribe.resting .parch,.scribe.resting .l1,.scribe.resting .l2,.scribe.resting .quill{display:none}
 .scribe.resting .sit svg{transform-origin:50% 100%;transition:transform 1.4s ease-in-out}
 .scribe[data-scene=stars] .sit svg{transform:rotate(-9deg)}
-.scribe[data-scene=nap] .sit svg{transform:rotate(8deg) translateY(2px)}
+.scribe[data-scene=nap] .sit svg{transform-origin:50% 100%;transform:translate(3px,-7px) rotate(90deg)}
 .scribe[data-scene=tea] .sit svg{animation:sc-sip 5s ease-in-out infinite}
 .scribe .fl,.scribe .fl2{transform-box:fill-box;transform-origin:50% 100%;animation:sc-flick .7s ease-in-out infinite alternate}
 .scribe .fl2{animation-duration:.5s;animation-delay:-.2s}

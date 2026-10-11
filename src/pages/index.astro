@@ -78,6 +78,9 @@ const software = [
 
 // Pre-rendered by tools/thumbs/make_thumbs.py (light and dark variant per post).
 const thumbs = import.meta.glob<ImageMetadata>("../assets/thumbs/*.webp", { eager: true, import: "default" });
+// Thumbnail filenames carry a content hash (<post>-<theme>-<hash>.webp); find the one for a post.
+const thumbOf = (postId: string, theme: "light" | "dark") =>
+  Object.entries(thumbs).find(([path]) => new RegExp(`/${postId}-${theme}-[0-9a-f]{8}\\.webp$`).test(path))?.[1];
 
 const sortedPosts = (await getCollection("blog", ({ data }) => import.meta.env.DEV || !data.draft)).sort(
   (a, b) => b.data.date.valueOf() - a.data.date.valueOf()
@@ -654,11 +657,11 @@ const posts = await Promise.all(
                 )}
               </div>
               <div class="flex items-center gap-2 flex-shrink-0">
-                <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded border border-rule bg-paper">
-                  {thumbs[`../assets/thumbs/${post.id}-light.webp`] && (
+                <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded-[3px]">
+                  {thumbOf(post.id, "light") && (
                     <>
-                      <Image src={thumbs[`../assets/thumbs/${post.id}-light.webp`]} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover dark:hidden" />
-                      <Image src={thumbs[`../assets/thumbs/${post.id}-dark.webp`]} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover hidden dark:block" />
+                      <Image src={thumbOf(post.id, "light")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover dark:hidden" />
+                      <Image src={thumbOf(post.id, "dark")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover hidden dark:block" />
                     </>
                   )}
                 </div>

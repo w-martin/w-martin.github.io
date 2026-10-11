@@ -117,7 +117,8 @@ export function mountWyvern(box: HTMLElement) {
       onScreen(b) && spots.push({ left: b.left - r.left + b.width * from, width: b.width * (to - from), top, weight });
     document.querySelectorAll<HTMLElement>("[data-cover]").forEach((c) => {
       const b = c.getBoundingClientRect();
-      add(b, b.top - r.top, 1);
+      // the cover's frame line floats about 5px above its top edge; that's where it sits
+      add(b, b.top - r.top - 7, 1);
     });
     document.querySelectorAll<HTMLElement>("#music a.inline-block").forEach((a) => {
       const b = a.getBoundingClientRect();
@@ -217,10 +218,20 @@ export function mountWyvern(box: HTMLElement) {
     const wing = part(".pwing");
     // the perched sprite faces left by default; scaleX(-1) on the wrapper flips it
     if (name === "sleep") {
-      const dip = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(-30deg) translate(-1px,5px)", offset: 0.15 }, { transform: "rotate(-30deg) translate(-1px,5px)", offset: 0.92 }, { transform: "rotate(0)" }], { duration: 15000, easing: "ease-in-out" });
-      const tuck = wing.animate([{ transform: "scale(1)" }, { transform: "scale(.82,.9) translate(2px,2px)", offset: 0.15 }, { transform: "scale(.82,.9) translate(2px,2px)", offset: 0.92 }, { transform: "scale(1)" }], { duration: 15000, easing: "ease-in-out" });
-      for (let i = 1; i <= 4; i++) setTimeout(() => puff(16, 10), i * 3000);
-      await Promise.all([hold(dip), hold(tuck)]);
+      // Curls up: the body hunkers down, the head tucks in against it, the wing folds over and the tail
+      // wraps round the front. Held for a while with slow breathing and the odd puff of smoke.
+      const body = el.querySelector<SVGElement>(".perch")!;
+      const tail = part(".ptail");
+      const D = 16000;
+      const settle = (to: Keyframe, mid: Keyframe) => [{ transform: "none" }, { ...to, offset: 0.12 }, { ...mid, offset: 0.5 }, { ...to, offset: 0.9 }, { transform: "none" }];
+      const anims = [
+        body.animate(settle({ transform: "scale(1.08,.7)" }, { transform: "scale(1.1,.67)" }), { duration: D, easing: "ease-in-out" }),
+        head.animate(settle({ transform: "rotate(-62deg) translate(4px,11px)" }, { transform: "rotate(-66deg) translate(4px,12px)" }), { duration: D, easing: "ease-in-out" }),
+        wing.animate(settle({ transform: "scale(.78,.86) translate(3px,3px)" }, { transform: "scale(.76,.84) translate(3px,3px)" }), { duration: D, easing: "ease-in-out" }),
+        tail.animate(settle({ transform: "rotate(-118deg)" }, { transform: "rotate(-124deg)" }), { duration: D, easing: "ease-in-out" }),
+      ];
+      for (let i = 1; i <= 4; i++) setTimeout(() => puff(10, 14), i * 3200);
+      await Promise.all(anims.map(hold));
     } else if (name === "stretch") {
       const spread = wing.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.35 }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.7 }, { transform: "rotate(6deg) scale(1)", offset: 0.85 }, { transform: "rotate(0) scale(1)" }], { duration: 4200, easing: "ease-in-out" });
       const lift = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.35 }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.7 }, { transform: "rotate(0)" }], { duration: 4200, easing: "ease-in-out" });

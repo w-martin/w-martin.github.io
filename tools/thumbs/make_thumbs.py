@@ -6,6 +6,7 @@ Needs Chrome (set CHROME to override the path). Output: src/assets/thumbs/<post>
 The thumbnails are committed, so the site build itself needs no browser.
 """
 
+import hashlib
 import os
 import re
 import shutil
@@ -148,10 +149,16 @@ def main() -> None:
                     )  # fmt: skip
                     img = Image.open(shot).convert("RGBA").crop((0, 0, PAGE_W, PAGE_H))
                 page.unlink()
-                dest = OUT / f"{post_id}-{theme}.webp"
+                tmp_dest = OUT / f"{post_id}-{theme}.tmp.webp"
                 img.resize(THUMB, Image.LANCZOS).save(
-                    dest, "WEBP", quality=80, method=6, alpha_quality=70
+                    tmp_dest, "WEBP", quality=80, method=6, alpha_quality=70
                 )
+                # The hash is in the filename so a changed thumbnail gets a new URL (the dev server
+                # serves images with a year-long cache lifetime, which kept showing stale ones).
+                digest = hashlib.sha1(tmp_dest.read_bytes()).hexdigest()[:8]
+                for old in OUT.glob(f"{post_id}-{theme}-*.webp"):
+                    old.unlink()
+                dest = tmp_dest.rename(OUT / f"{post_id}-{theme}-{digest}.webp")
                 print(f"{dest.relative_to(ROOT)}: {dest.stat().st_size:,} B")
     finally:
         server.terminate()
