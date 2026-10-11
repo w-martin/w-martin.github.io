@@ -10,6 +10,23 @@ interface Props {
 
 const { title, description = "Will Martin: ML engineer, researcher, musician." } = Astro.props;
 
+// Identity links only. No employer or job title, so this never goes stale; alternateName ties the papers published as William Martin to this person.
+const person = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  name: "Will Martin",
+  alternateName: "William Martin",
+  url: "https://willmartin.uk",
+  alumniOf: { "@type": "CollegeOrUniversity", name: "University College London", sameAs: "https://www.ucl.ac.uk" },
+  knowsAbout: ["MLOps", "Systems engineering", "Machine learning", "Python", "Rust", "Empirical software engineering"],
+  sameAs: [
+    "https://linkedin.com/in/willmartinuk",
+    "https://github.com/w-martin",
+    "https://pypi.org/user/will-martin",
+    "https://scholar.google.co.uk/citations?user=OXYi23sAAAAJ&hl=en",
+  ],
+};
+
 const nav = [
   {
     href: "/#software",
@@ -37,6 +54,7 @@ const nav = [
     <meta name="color-scheme" content="only light" />
     <title>{title} | Will Martin</title>
     <meta name="description" content={description} />
+    <script type="application/ld+json" set:html={JSON.stringify(person)} />
     <link rel="icon" href="/favicon.ico?v=9" sizes="any" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png?v=9" />
     <!-- Cloudflare Web Analytics -->
