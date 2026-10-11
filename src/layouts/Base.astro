@@ -377,6 +377,9 @@ const nav = [
         document.head.appendChild(style);
         document.body.appendChild(ring);
 
+        // A layer's clip circle is measured from the layer's own corner, not the page's, so each one is
+        // offset by where its element sits, or the colour would change out of step with the page.
+        const origins = live.map((el) => el.getBoundingClientRect());
         const transition = document.startViewTransition(flip);
         vt = { transition, live, style, ring };
         transition.ready.then(() => {
@@ -384,7 +387,10 @@ const nav = [
           const timing = { duration: DURATION, easing: "cubic-bezier(.45,.05,.3,1)", fill: "forwards" };
           const reveal = document.documentElement.animate(clip, { ...timing, pseudoElement: "::view-transition-new(root)" });
           live.forEach((_, i) =>
-            document.documentElement.animate(clip, { ...timing, pseudoElement: `::view-transition-new(live-${i})` }),
+            document.documentElement.animate(
+              { clipPath: [`circle(0px at ${x - origins[i].left}px ${y - origins[i].top}px)`, `circle(${radius}px at ${x - origins[i].left}px ${y - origins[i].top}px)`] },
+              { ...timing, pseudoElement: `::view-transition-new(live-${i})` },
+            ),
           );
           drawVeil(ring, x, y, radius, () => reveal.effect.getComputedTiming().progress ?? 1, () => reveal.playState === "finished", warm);
         });

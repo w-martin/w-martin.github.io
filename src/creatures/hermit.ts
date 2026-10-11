@@ -1,4 +1,4 @@
-import { calm, every, injectStyle, onOpen, rand, turn, whenVisible } from "./shared";
+import { calm, every, injectStyle, onOpen, rand, sleep, turn, whenVisible } from "./shared";
 
 // A scrawny old scribe in single-weight line art. Now and then he walks along the Blog heading's
 // rule, sits to write notes on parchment, then gets up and wanders off.
@@ -13,9 +13,17 @@ const SVG = `<div class="pose walk"><div class="wa">${WALK("M16 46 L14 52 L11 58
 <path d="M7 42 L13 34 L22 40 L31 36 L34 42Z"/><path d="M22 28 C26 30 30 31 34 30"/>
 <path class="parch" d="M31 31 L45 27 L48 37 L34 41Z"/><path class="l1" d="M35 34 L44 31.5"/><path class="l2" d="M36 37 L45 34.5"/>
 <g class="quill"><path d="M34 30 L43 20"/><path d="M43 20 C45 16 48 16 49 18 C47 20 45 21 43 20"/></g></svg></div>
+<div class="pose rise"><svg viewBox="0 0 44 60" overflow="visible"><g class="rbody">${HEAD}<g class="rback"><path d="M21 25 C14 27 10 33 11.5 40"/><path d="M11.5 40 l3.5 1.5"/><path d="M12.5 4 l-4 -2 M10.5 9.5 l-5 0 M11.5 15 l-4 2.5"/></g></g>
+<g class="rl rla"><path d="M17 50 L27 52 L22 58 M22 58 l-2 0 M23 52 L34 54 L31 58 M31 58 l2 0"/></g>
+<g class="rl rlb"><path d="M16 48 L22 52 L17 58 M17 58 l-2 0 M24 48 L29 52 L28 58 M28 58 l2 0"/></g>
+<g class="rl rlc"><path d="M16 46 L14 52 L11 58 M11 58 l-2 0 M24 46 L28 51 L31 58 M31 58 l2 0"/></g>
+<g class="rstaff"><path d="M32 12 L35 58"/><path d="M32 12 C31 8.5 36 8 36 12"/></g></svg></div>
 <svg class="prop p-fire" viewBox="0 0 24 24" width="24" height="24"><path d="M2 22L20 18M3 18L21 22"/><path class="fl" d="M11 18C5 15 7 9 11 4C11 10 17 11 15.5 16C14.5 18 12.5 19 11 18Z"/><path class="fl2" d="M11 17C9 15 9.5 12.5 11 10.5C12.5 12.5 13 15 11 17Z"/></svg>
 <svg class="prop p-pot" viewBox="0 0 28 30" width="28" height="30"><path d="M5 17H19L17.5 25H6.5Z"/><path d="M19 18C23 18 23 23 19 23"/><path d="M9 28L11 26M14 28L14 26M19 28L17 26"/><path class="st s1" d="M9 14C7 11 11 9 9 6"/><path class="st s2" d="M13 14C11 11 15 9 13 6"/><path class="st s3" d="M17 14C15 11 19 9 17 6"/></svg>
 <div class="prop p-stars"><i style="left:0;top:8px"></i><i style="left:16px;top:0;animation-delay:-.7s"></i><i style="left:30px;top:10px;animation-delay:-1.4s"></i><i style="left:44px;top:2px;animation-delay:-.3s"></i></div>
+<div class="pose fall"><svg viewBox="0 0 44 60" overflow="visible">${HEAD}<g class="lim a1"><path d="M20 28L4 18M4 18l-3 -3"/></g><g class="lim a2"><path d="M30 26L42 14M42 14l3 -2"/></g><g class="lim g1"><path d="M16 46L6 58M6 58l-3 1"/></g><g class="lim g2"><path d="M26 46L36 56M36 56l3 0"/></g></svg></div>
+<svg class="wand" viewBox="0 0 16 16" width="16" height="16"><path d="M1 15L13 3"/><path class="wspark" d="M13 0.5v5M10.5 3h5"/></svg>
+<div class="bubble"></div>
 <div class="prop p-zs"><b>z</b><b style="animation-delay:-1.1s">z</b><b style="animation-delay:-2.2s">z</b></div>`;
 
 const CSS = `
@@ -23,8 +31,44 @@ const CSS = `
 .scribe svg{display:block}
 .scribe svg *{fill:none;stroke:var(--color-body);stroke-width:1.2px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .scribe svg .dot{fill:var(--color-body);stroke:none}
+.scribe.ending[data-scene] .prop{animation:sc-out 2.2s ease-in forwards}
+.scribe.ending[data-scene] .p-fire{transform-origin:50% 100%}
+@keyframes sc-out{0%{opacity:1;transform:scale(1)}100%{opacity:0;transform:scale(.55)}}
 .scribe .pose{display:none}
+.scribe .gust{position:absolute;left:-21px;pointer-events:none;opacity:0}
+.scribe .gust svg{display:block}
+.scribe .wand{display:none;position:absolute;left:19px;top:12px;transform-origin:0 100%}
+.scribe.casting .wand{display:block;animation:sc-wand .7s ease-out forwards}
+.scribe .wspark{opacity:0;animation:sc-spark .7s ease-out forwards}
+.scribe{--bub:var(--color-wash)}
+.dark .scribe{--bub:var(--color-body)}
+.scribe .bubble{display:none;position:absolute;left:-26px;top:-21px;width:80px;height:80px;border-radius:50%;pointer-events:none;
+  border:1.3px solid color-mix(in srgb,var(--color-body) 75%,transparent);
+  background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.4) 0 7%,transparent 22%),color-mix(in srgb,var(--bub) 9%,transparent);
+  box-shadow:inset 0 0 10px color-mix(in srgb,var(--bub) 25%,transparent),0 0 12px color-mix(in srgb,var(--bub) 25%,transparent)}
+.scribe.bubbled .bubble{display:block;animation:sc-bubble .45s cubic-bezier(.2,1.4,.4,1)}
+.scribe .fall{width:28px}
+.scribe.falling .fall{display:block}
+.scribe.falling .fall svg{animation:sc-tumble 1.7s ease-in-out infinite alternate;transform-origin:50% 50%}
+.scribe .lim{transform-box:view-box}
+.scribe .a1{transform-origin:20px 28px;animation:sc-flail .85s ease-in-out infinite alternate}
+.scribe .a2{transform-origin:30px 26px;animation:sc-flail 1.05s ease-in-out infinite alternate-reverse}
+.scribe .g1{transform-origin:16px 46px;animation:sc-flail 1.2s ease-in-out infinite alternate-reverse}
+.scribe .g2{transform-origin:26px 46px;animation:sc-flail .95s ease-in-out infinite alternate}
+@keyframes sc-wand{0%{transform:rotate(60deg)}60%{transform:rotate(-30deg)}100%{transform:rotate(-18deg)}}
+@keyframes sc-spark{0%,45%{opacity:0;transform:scale(.3)}60%{opacity:1;transform:scale(1.4)}100%{opacity:.4;transform:scale(1)}}
+@keyframes sc-bubble{from{transform:scale(0);opacity:0}to{transform:scale(1);opacity:1}}
+@keyframes sc-tumble{from{transform:rotate(-20deg)}to{transform:rotate(18deg)}}
+@keyframes sc-flail{from{transform:rotate(-26deg)}to{transform:rotate(26deg)}}
 .scribe.walking .walk,.scribe.writing .sit,.scribe.resting .sit{display:block}
+.scribe.rising .rise,.scribe.rising .sit{display:block}
+.scribe.rising .sit{position:absolute;left:0;bottom:0}
+.scribe .rise{width:28px}
+.scribe .rl,.scribe .rback{display:none}
+.scribe[data-rise=a] .rback,.scribe[data-rise=b] .rback{display:block}
+.scribe[data-rise=a] .rla,.scribe[data-rise=b] .rlb,.scribe[data-rise=c] .rlc{display:block}
+.scribe .rbody{transform-origin:20px 46px}
+.scribe .rstaff{transform-origin:35px 58px}
 .scribe .prop{position:absolute;display:none}
 .scribe[data-scene=fire] .p-fire{display:block;left:42px;bottom:0;animation:sc-in 1.6s ease-out}
 .scribe[data-scene=tea] .p-pot{display:block;left:42px;bottom:0;animation:sc-in 1.2s ease-out}
@@ -83,7 +127,11 @@ export function mountHermit(summary: HTMLElement) {
     a ? a.getBoundingClientRect().bottom - summary.getBoundingClientRect().bottom - 1 : 0;
   // Vertical position is the CSS `translate` property, separate from the walking `transform`, and is
   // recomputed whenever the layout changes, so he stays on his line when entries open.
-  const stick = () => (el.style.translate = `0 ${dyOf(anchor)}px`);
+  // (Once his line is gone he keeps his last position, so the fall starts from where he really was.)
+  const stick = () => {
+    if (anchor && (anchor.open || !blog?.open)) return;
+    el.style.translate = `0 ${dyOf(anchor)}px`;
+  };
   const setX = (nx: number, f = face) => {
     x = nx;
     face = f;
@@ -97,11 +145,173 @@ export function mountHermit(summary: HTMLElement) {
   stick();
 
   const blog = summary.closest("details");
-  blog?.addEventListener("toggle", () => {
-    if (!blog.open) anchor = null; // the entries he was on have folded away: back to the heading line
-    stick();
+  // If the line he's standing on goes (his entry is opened, or the whole Blog folds away while he is
+  // on an entry), the floor drops out: he falls, flailing, off the bottom of the screen and stays
+  // gone until the page is refreshed. In calm mode he just steps back onto the heading line.
+  let gone = false;
+  // A hidden cheat: poking him is a bad idea.
+  el.style.pointerEvents = "auto";
+  el.style.cursor = "pointer";
+  el.addEventListener("click", (e) => {
+    // He lives inside the Blog heading, so keep the click from toggling the section.
+    e.preventDefault();
+    e.stopPropagation();
+    if (!gone && !calm()) void fall();
   });
-  blog?.addEventListener("toggle", stick, true);
+  (el as HTMLElement & { anchorTo?: (a: HTMLElement | null) => void }).anchorTo = (a) => {
+    anchor = a;
+    stick();
+  };
+  // A gust of wind: line-art streaks sweep across the heading (dir 1 blows to the right, -1 to the left).
+  const gust = (dir: number) => {
+    // He is mirrored with scaleX when facing left, and the streaks inherit that.
+    const flip = /scaleX\(-1\)/.test(el.style.transform) ? -1 : 1;
+    dir = dir * flip;
+    const streak = (y: number, delay: number, len: number) => {
+      const g = document.createElement("div");
+      g.className = "gust";
+      g.style.top = `${y}px`;
+      g.innerHTML = `<svg viewBox="0 0 70 16" width="${len}" height="${len * 0.23}" style="transform:scaleX(${dir})"><path d="M0 8H46C55 8 60 2 55 0C51-2 46 3 50 7"/></svg>`;
+      el.appendChild(g);
+      // They blow in from the upwind side and fade out before reaching the bubble, never crossing it.
+      const end = dir > 0 ? -(len + 18) : 88;
+      g.animate(
+        [
+          { opacity: 0, transform: `translateX(${end - dir * 230}px)` },
+          { opacity: 0.85, transform: `translateX(${end - dir * 130}px)`, offset: 0.3 },
+          { opacity: 0.85, transform: `translateX(${end - dir * 50}px)`, offset: 0.65 },
+          { opacity: 0, transform: `translateX(${end}px)` },
+        ],
+        { duration: 1300, delay, easing: "ease-out" },
+      ).finished.then(() => g.remove());
+    };
+    [[-8, 0, 70], [6, 90, 56], [20, 40, 80], [34, 150, 60], [48, 70, 66], [14, 230, 74]].forEach(([y, d, l]) => streak(y, d, l));
+  };
+
+  const fall = async () => {
+    gone = true;
+    el.getAnimations().forEach((a) => a.cancel());
+    el.classList.remove("writing", "resting", "walking", "ending");
+    delete el.dataset.scene;
+    const startY = parseFloat(el.style.translate.split(" ")[1]) || 0;
+
+    // One continuous path, with no jumps in speed: he gets up with a start, stumbles forward and trips,
+    // tumbles, flicks a wand as he falls, and the bubble pops up and slows him to a stop. It then drifts
+    // up from rest, never stopping, until a gust adds sideways speed and blows it off the screen.
+    const face = /scaleX\(-1\)/.test(el.style.transform) ? -1 : 1;
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const r = el.getBoundingClientRect();
+    const dist = (dir > 0 ? innerWidth - r.left : r.right) + 200;
+    const hopMs = 1000; // an old hermit getting up: slowly, with a stoop, no hopping
+    const stumbleMs = 800;
+    const preMs = hopMs + stumbleMs;
+    const slipMs = 1300;
+    const brakeMs = 1900;
+    const flightMs = Math.min(8000, 5600 + dist * 1.2);
+    const total = preMs + slipMs + brakeMs + flightMs;
+    const vA = 0.055; // px per ms when the bubble appears
+    const slipPx = (vA * slipMs) / 2;
+    const brakePx = (vA * brakeMs) / 2;
+    const rise = 190 + 0.18 * dist;
+    const gustAt = 0.4;
+    const x1 = rand(-20, 20);
+    const smooth = (u: number) => u * u * (3 - 2 * u);
+    const at = (ms: number) => {
+      if (ms <= hopMs) return { x: 0, y: 0 };
+      if (ms <= preMs) return { x: face * 16 * smooth((ms - hopMs) / stumbleMs), y: 0 };
+      const m = ms - preMs;
+      if (m <= slipMs) return { x: face * (16 + 6 * (m / slipMs)), y: (vA * m * m) / (2 * slipMs) };
+      const xs = face * 22;
+      if (m <= slipMs + brakeMs) {
+        const u = (m - slipMs) / brakeMs;
+        return { x: xs, y: slipPx + vA * brakeMs * (u / 2 + Math.sin(Math.PI * u) / (2 * Math.PI)) };
+      }
+      const t = (m - slipMs - brakeMs) / flightMs;
+      const w = Math.max(0, (t - gustAt) / (1 - gustAt));
+      return {
+        x: xs + x1 * Math.min(1, t / gustAt) + dir * dist * w * w * (3 - 1.8 * w),
+        y: slipPx + brakePx - rise * Math.pow(t, 1.6),
+      };
+    };
+    const n = Math.round(total / 50);
+    const keys = Array.from({ length: n + 1 }, (_, i) => {
+      const p = at((i / n) * total);
+      return { translate: `${p.x}px ${startY + p.y}px`, offset: i / n };
+    });
+    // Leaning and tripping forward, then toppling slowly over as he falls; the bubble catches him and
+    // rights him as it forms.
+    const lean = (ms: number, deg: number) => ({ rotate: `${face * deg}deg`, offset: ms / total, easing: "ease-in-out" });
+    // He gets up in stages: a crouch pushing on his staff, a stooped half-rise, then upright, the body
+    // and staff swinging up between them.
+    el.classList.remove("writing", "resting");
+    el.classList.add("rising");
+    el.dataset.rise = "a";
+    el.querySelector(".sit")?.animate([{ opacity: 1 }, { opacity: 0 }], { duration: 150, fill: "forwards" });
+    el.querySelector(".rise")?.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 150 });
+    const swing = (sel: string, frames: [number, number, number][]) =>
+      el.querySelector(sel)?.animate(
+        frames.map(([offset, deg, dy]) => ({ offset, transform: `translate(0,${dy}px) rotate(${deg}deg)`, easing: "ease-in-out" })),
+        { duration: hopMs, fill: "forwards" },
+      );
+    // He tries, sags back with a groan (a hand to his aching back), then heaves himself up.
+    swing(".rbody", [[0, 40, 8], [0.18, 35, 6.5], [0.32, 40, 8], [0.55, 26, 5], [0.8, 10, 1.5], [1, 0, 0]]);
+    swing(".rstaff", [[0, 25, 0], [0.18, 21, 0], [0.32, 25, 0], [0.55, 16, 0], [0.8, 6, 0], [1, 0, 0]]);
+    setTimeout(() => (el.dataset.rise = "b"), hopMs * 0.5);
+    setTimeout(() => (el.dataset.rise = "c"), hopMs * 0.75);
+    setTimeout(() => {
+      el.classList.remove("rising");
+      el.classList.add("walking");
+      delete el.dataset.rise;
+    }, hopMs);
+    // The poses are rotated, not the element: his sideways position is in `transform`, so rotating the
+    // element would swing him round a pivot far away.
+    const tilt = [
+      lean(0, 0),
+      lean(hopMs, 0),
+      lean(hopMs + 250, -7),
+      lean(hopMs + 520, 15),
+      lean(preMs, 36),
+      lean(preMs + slipMs * 0.45, 84),
+      lean(preMs + slipMs * 0.62, 84),
+      lean(preMs + slipMs, 0),
+      lean(total, 0),
+    ];
+    el.querySelectorAll(".pose").forEach((pose) => pose.animate(tilt, { duration: total, fill: "forwards", easing: "linear" }));
+    const flight = el.animate(keys, { duration: total, fill: "forwards", easing: "linear" });
+    await sleep(preMs);
+    el.classList.remove("walking");
+    el.classList.add("falling");
+    await sleep(slipMs * 0.4);
+    el.classList.add("casting");
+    await sleep(slipMs * 0.6);
+    el.classList.add("bubbled");
+    setTimeout(() => el.classList.remove("casting"), 500);
+    await sleep(brakeMs + flightMs * gustAt - 250);
+    gust(dir);
+    await flight.finished.catch(() => undefined);
+    el.getAnimations().forEach((a) => a.cancel());
+    el.remove();
+  };
+  const lineGone = () => {
+    if (gone || !anchor) return false;
+    if (anchor.open || !blog?.open) return true;
+    return false;
+  };
+  blog?.addEventListener(
+    "toggle",
+    () => {
+      if (gone) return;
+      if (lineGone()) {
+        if (calm()) {
+          anchor = null;
+          stick();
+        } else void fall();
+        return;
+      }
+      stick();
+    },
+    true,
+  );
   new ResizeObserver(stick).observe(blog ?? summary);
   addEventListener("resize", stick);
 
@@ -150,7 +360,7 @@ export function mountHermit(summary: HTMLElement) {
   };
 
   const wander = async () => {
-    if (calm()) return;
+    if (calm() || gone) return;
     const speed = rand(0.011, 0.016); // px per ms
     el.classList.remove("writing");
     el.classList.add("walking");
@@ -181,7 +391,7 @@ export function mountHermit(summary: HTMLElement) {
   // brews tea, watches the stars, naps), then goes back to his notes.
   const SCENES = ["fire", "tea", "stars", "nap"];
   const scene = async () => {
-    if (calm()) return;
+    if (calm() || gone) return;
     const name = SCENES[Math.floor(Math.random() * SCENES.length)];
     setX(x, 1); // props are drawn on his right-hand side
     el.classList.remove("walking", "writing");
@@ -189,7 +399,13 @@ export function mountHermit(summary: HTMLElement) {
     el.dataset.scene = name;
     try {
       await new Promise((res) => setTimeout(res, rand(13, 22) * 1000));
+      // The fire burns down (or the tea cools) over a couple of seconds before he gets up.
+      if (!gone) {
+        el.classList.add("ending");
+        await new Promise((res) => setTimeout(res, 2200));
+      }
     } finally {
+      el.classList.remove("ending");
       delete el.dataset.scene;
       el.classList.remove("resting");
       el.classList.add("writing");

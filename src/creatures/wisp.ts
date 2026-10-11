@@ -178,6 +178,26 @@ export function mountWisp(section: HTMLElement) {
     }
   };
 
+  // Poke it: it startles, flares and flings out a ring of sparks, then settles. (It sits inside the
+  // section heading, so the click must not toggle the section.)
+  core.style.pointerEvents = "auto";
+  core.style.cursor = "pointer";
+  core.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (calm() || core.classList.contains("spinning")) return;
+    for (let i = 0; i < 14; i++) {
+      const a = (i / 14) * 6.283;
+      setTimeout(() => mote(pos[0] + Math.cos(a) * 22, pos[1] + Math.sin(a) * 22), i * 25);
+    }
+    core.classList.add("spinning");
+    lamp.animate(
+      [{ transform: "scale(1)", opacity: 0.45 }, { transform: "scale(1.7)", opacity: 0.9, offset: 0.3 }, { transform: "scale(1)", opacity: 0.45 }],
+      { duration: 1800, easing: "ease-out" },
+    );
+    setTimeout(() => core.classList.remove("spinning"), 2400);
+  });
+
   // The pointer, for the "peek" scene (desktop only).
   let mouse: P | null = null;
   addEventListener("pointermove", (e) => {

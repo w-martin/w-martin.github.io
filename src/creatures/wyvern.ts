@@ -254,6 +254,29 @@ export function mountWyvern(box: HTMLElement) {
     }
     await sleep(600);
   };
+  // Poke it: it rears up with a hop, flares its wings and snorts out puffs of smoke. (It sits inside
+  // the section heading, so the click must not toggle the section.)
+  const react = async () => {
+    if (calm() || !el.classList.contains("perched")) return;
+    const head = part(".phead");
+    const wing = part(".pwing");
+    const hop = el.animate([{ translate: "0 0" }, { translate: "0 -14px", offset: 0.35 }, { translate: "0 0" }], { duration: 650, easing: "ease-out" });
+    const flare = wing.animate(
+      [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.3 }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.7 }, { transform: "rotate(0) scale(1)" }],
+      { duration: 1700, easing: "ease-in-out" },
+    );
+    const roar = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(18deg) translate(0,-2px)", offset: 0.25 }, { transform: "rotate(18deg) translate(0,-2px)", offset: 0.65 }, { transform: "rotate(0)" }], { duration: 1700, easing: "ease-in-out" });
+    for (let i = 0; i < 5; i++) setTimeout(() => puff(4 + i, 4 + (i % 2) * 3, 1.1), 300 + i * 160);
+    await Promise.all([hold(hop), hold(flare), hold(roar)]);
+  };
+  el.style.pointerEvents = "auto";
+  el.style.cursor = "pointer";
+  el.addEventListener("click", (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    void react();
+  });
+
   const act = () => turn(Math.random() < 0.55 ? scene : fly);
 
   window.addEventListener("motionchange", () => {
