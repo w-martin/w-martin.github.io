@@ -21,6 +21,21 @@ const SVG = `<div class="pose walk"><div class="wa">${WALK("M16 46 L14 52 L11 58
 <svg class="prop p-fire" viewBox="0 0 24 24" width="24" height="24"><path d="M2 22L20 18M3 18L21 22"/><path class="fl" d="M11 18C5 15 7 9 11 4C11 10 17 11 15.5 16C14.5 18 12.5 19 11 18Z"/><path class="fl2" d="M11 17C9 15 9.5 12.5 11 10.5C12.5 12.5 13 15 11 17Z"/></svg>
 <svg class="prop p-pot" viewBox="0 0 28 30" width="28" height="30"><path d="M5 17H19L17.5 25H6.5Z"/><path d="M19 18C23 18 23 23 19 23"/><path d="M9 28L11 26M14 28L14 26M19 28L17 26"/><path class="st s1" d="M9 14C7 11 11 9 9 6"/><path class="st s2" d="M13 14C11 11 15 9 13 6"/><path class="st s3" d="M17 14C15 11 19 9 17 6"/></svg>
 <div class="prop p-stars"><i style="left:0;top:8px"></i><i style="left:16px;top:0;animation-delay:-.7s"></i><i style="left:30px;top:10px;animation-delay:-1.4s"></i><i style="left:44px;top:2px;animation-delay:-.3s"></i></div>
+<div class="pose lie"><svg viewBox="0 0 64 42" overflow="visible">
+<path d="M3 40 C0.6 30 3.6 19 11 15.4 C17 12.6 24 15.6 26.4 22 C28 28 27 34 27 40"/>
+<path d="M8.4 24 l4.4 3.2 M14.2 33.4 l4.6 -2.4 M10.4 18.6 l3 .2"/>
+<path d="M30 40 L17 6.6 M17 6.6 C15.4 3 20.6 1.8 21.4 5.6"/>
+<path d="M26.4 22 C25.4 28 25.8 34 27.4 39.6"/>
+<path d="M27 21 C26 13 31 8.6 37 10 C41.4 11.2 42.6 16 40.4 20.4"/>
+<path d="M28 11.6 C26 8.4 23.6 9 22.6 11.2"/>
+<path d="M35.6 16.4 q1.6 1.2 3.2 0"/>
+<path d="M41 16.4 l3.2 2.2 l-2.8 1.2"/>
+<path d="M36.4 22.4 C39.4 26.6 40 31.6 36.6 36 C33.6 32.6 32.6 27.4 33.4 22.6"/>
+<path d="M29.4 25.6 C34 29.4 39 30 43.6 27.6 M43.6 27.6 c1.4 -.6 2.6 .2 2.4 1.4 c-.4 1.2 -1.8 1 -2.2 0"/>
+<path d="M40.4 20.4 C46 22.6 48.6 27 49.6 31.6 C51 35 52 37 52.6 38.2"/><path d="M34 38 C38 35.4 43 35.6 47 38.6 M29.6 32.6 C31 35.4 31.6 37.6 31 39.6"/>
+<path d="M30 40.6 L58 40.6 M36 40.4 l-.6 1.3 M44 40.5 l.4 1.3"/>
+<path d="M52.6 38.2 L55.6 33 C57.4 31.4 59.8 33.4 58.4 35.8 L57 40.4 M56.4 33.6 l.4 2"/>
+</svg></div>
 <div class="pose fall"><svg viewBox="0 0 44 60" overflow="visible">${HEAD}<g class="lim a1"><path d="M20 28L4 18M4 18l-3 -3"/></g><g class="lim a2"><path d="M30 26L42 14M42 14l3 -2"/></g><g class="lim g1"><path d="M16 46L6 58M6 58l-3 1"/></g><g class="lim g2"><path d="M26 46L36 56M36 56l3 0"/></g></svg></div>
 <svg class="wand" viewBox="0 0 16 16" width="16" height="16"><path d="M1 15L13 3"/><path class="wspark" d="M13 0.5v5M10.5 3h5"/></svg>
 <div class="bubble"></div>
@@ -73,11 +88,13 @@ const CSS = `
 .scribe[data-scene=fire] .p-fire{display:block;left:42px;bottom:0;animation:sc-in 1.6s ease-out}
 .scribe[data-scene=tea] .p-pot{display:block;left:42px;bottom:0;animation:sc-in 1.2s ease-out}
 .scribe[data-scene=stars] .p-stars{display:block;left:6px;top:-26px;width:56px;height:20px}
-.scribe[data-scene=nap] .p-zs{display:block;left:46px;top:-4px}
+.scribe[data-scene=nap] .p-zs{display:block;left:24px;top:-16px}
 .scribe.resting .parch,.scribe.resting .l1,.scribe.resting .l2,.scribe.resting .quill{display:none}
 .scribe.resting .sit svg{transform-origin:50% 100%;transition:transform 1.4s ease-in-out}
 .scribe[data-scene=stars] .sit svg{transform:rotate(-9deg)}
-.scribe[data-scene=nap] .sit svg{transform-origin:50% 100%;transform:translate(3px,-7px) rotate(90deg)}
+.scribe .lie{width:44px}
+.scribe[data-scene=nap] .lie{display:block}
+.scribe.resting[data-scene=nap] .sit{display:none}
 .scribe[data-scene=tea] .sit svg{animation:sc-sip 5s ease-in-out infinite}
 .scribe .fl,.scribe .fl2{transform-box:fill-box;transform-origin:50% 100%;animation:sc-flick .7s ease-in-out infinite alternate}
 .scribe .fl2{animation-duration:.5s;animation-delay:-.2s}
@@ -193,6 +210,7 @@ export function mountHermit(summary: HTMLElement) {
     el.getAnimations().forEach((a) => a.cancel());
     el.classList.remove("writing", "resting", "walking", "ending");
     delete el.dataset.scene;
+    el.querySelectorAll(".sit svg, .lie").forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
     const startY = parseFloat(el.style.translate.split(" ")[1]) || 0;
 
     // One continuous path, with no jumps in speed: he gets up with a start, stumbles forward and trips,
@@ -396,8 +414,17 @@ export function mountHermit(summary: HTMLElement) {
     setX(x, 1); // props are drawn on his right-hand side
     el.classList.remove("walking", "writing");
     el.classList.add("resting");
-    el.dataset.scene = name;
+    const slouch = el.querySelector<SVGElement>(".sit svg");
     try {
+      if (name === "nap") {
+        // His head droops, then he lies down on his satchel.
+        await slouch?.animate([{ transform: "rotate(0)" }, { transform: "rotate(7deg)" }], { duration: 1000, easing: "ease-in-out", fill: "forwards" }).finished.catch(() => undefined);
+        el.dataset.scene = name;
+        el.querySelector(".lie")?.animate(
+          [{ opacity: 0, translate: "0 -5px" }, { opacity: 1, translate: "0 0" }],
+          { duration: 500, easing: "ease-in" },
+        );
+      } else el.dataset.scene = name;
       await new Promise((res) => setTimeout(res, rand(13, 22) * 1000));
       // The fire burns down (or the tea cools) over a couple of seconds before he gets up.
       if (!gone) {
@@ -406,9 +433,13 @@ export function mountHermit(summary: HTMLElement) {
       }
     } finally {
       el.classList.remove("ending");
+      const wasNap = el.dataset.scene === "nap";
       delete el.dataset.scene;
+      slouch?.getAnimations().forEach((a) => a.cancel());
       el.classList.remove("resting");
       el.classList.add("writing");
+      // He sits up from his nap, still a little slumped.
+      if (wasNap) slouch?.animate([{ transform: "rotate(7deg) translateY(3px)" }, { transform: "rotate(2deg)", offset: 0.5 }, { transform: "none" }], { duration: 900, easing: "ease-out" });
     }
   };
   const act = () => turn(Math.random() < 0.5 ? scene : wander);

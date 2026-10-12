@@ -18,26 +18,46 @@ const frames = FLAP.map(
 // Single-weight line art: a bat-winged dragon with a long neck, horns, a spined back and a Celtic
 // spiral at the tail tip.
 const FLY = `<svg class="fly" viewBox="0 0 104 66" overflow="visible">
-<path d="M80 24 C83 21 88 20 92 22 L98 25 L93 27 C90 28 86 28 83 27 M83 27 C86 30 91 30 94 28 M82 21 C80 17 76 15 72 16 M85 20 C85 15 82 12 79 11 M87 23.5 l2.2 -.6"/>
+<path d="M80 24 C83 21 88 20 92 22 L98 25 L93 27 C90 28 86 28 83 27 M83 27 C86 30 91 30 94 28 M87 23.5 l2.2 -.6"/>
+<g transform="translate(98 11.5) scale(-.82 .82) translate(-7 0)"><path d="M19.5 12 C20 7 25 3.5 32 4 C28.5 6 26.5 8.6 25.5 12.6Z"/><path d="M25.8 13.2 C27.5 10 31.8 8.8 36.5 10 C32.8 11.2 30.5 13 29.4 15.6Z"/></g>
 <path d="M80 24 C76 28 74 33 68 36 M83 27 C81 34 79 40 74 44 M77 26 l-2 -2 M74 29 l-2.4 -1.6 M71 32 l-2.6 -1.2"/>
 <path d="M68 36 C60 34 52 34 44 37 M74 44 C66 49 52 49 44 44 M68 47 L65 54 L70 55 M50 48 L47 55 L52 56"/>
 <path d="M44 37 C36 38 28 42 22 47 C18 51 12 51 9 49 C6 47 5 51 8 52 C11 53 11 49 9 49 M44 44 C38 47 32 51 26 54 C21 57 16 58 12 56"/>
 <path d="M53 41 c-3 0 -4 3 -2 4.4 c2.4 1.4 5 -1 3.4 -3.4"/>${frames}</svg>`;
 
-const PERCH = `<svg class="perch" viewBox="0 0 62 84" overflow="visible">
-<g class="phead"><path d="M7 18 L13 14 C17 11 23 11 27 14 C30 17 29 22 25 24 L15 23 C12 22 9 20 7 18Z M13 22 C16 25 21 25 24 23 M24 12 C27 7 32 6 36 8 M27 14 C32 11 36 12 38 15"/><circle class="dot" cx="16" cy="17.5" r=".9"/></g>
-<path d="M24 24 C24 31 28 35 31 39 M29 22 C33 28 35 33 37 39 M37 39 C45 43 49 53 47 65 M31 39 C25 45 25 55 29 65 M39 55 c-3 0 -4 3 -2 4.4 c2.4 1.4 5 -1 3.4 -3.4"/>
-<path class="pwing" d="M42 41 C52 39 58 47 58 59 L52 55 L50 61 L46 55 L44 59Z"/>
-<path class="ptail" d="M47 65 C55 65 59 71 56 76 C53 80 47 78 49 74 C50 72 53 73 53 75"/>
-<path d="M24 71 l8 0 M24 71 l-2 3 M28 71 l0 3 M32 71 l-1 3 M42 71 l8 0 M42 71 l-2 3 M46 71 l0 3 M50 71 l-1 3"/></svg>`;
+const PERCH = `<svg class="perch" viewBox="-31 0 124 84" overflow="visible">
+<g class="phead"><g transform="translate(24 26) scale(.88) translate(-24 -26)"><path d="M7 18 L13 14 C17 11 23 11 27 14 C30 17 29 22 25 24 L15 23 C12 22 9 20 7 18Z M13 22 C16 25 21 25 24 23 "/><path d="M19.5 12 C20 7 25 3.5 32 4 C28.5 6 26.5 8.6 25.5 12.6Z"/><path d="M25.8 13.2 C27.5 10 31.8 8.8 36.5 10 C32.8 11.2 30.5 13 29.4 15.6Z"/><circle class="dot" cx="16" cy="17.5" r=".9"/></g></g>
+<path d="M24.5 24 C24 31 28 36 31 41 M29 21.8 C34 27 38 32 41 39 M41 39 C47 40 52 43 55 49 C57.4 54 57.4 60 55 66 M31 41 C30 46 30.6 52 32.6 58 C34 62.4 36.4 68 38.4 73"/>
+<path d="M34.5 28.6 l2.4 -3 M38.4 33.6 l3.2 -2.4"/>
+<path d="M43.4 60 C47.6 57.6 53 60.6 53 66.4 C53 69.6 52 71.8 50.4 73 M42 73 L52 73 M29 73 L40 73 M42 73 l-2 2.4 M46 73 l0 2.6 M50 73 l1 2.4 M29 73 l-2 2.4 M33 73 l0 2.6 M37 73 l1 2.4 M46.6 63.6 c-2.4 0 -3.2 2.4 -1.6 3.6 c2 1.1 4 -.8 2.8 -2.8"/>
+<path class="pwing" d="M44 42 L54 19 L51.8 14.4 M54 19 C65 19.5 77 29 82 47 L76.4 44 L75 52.4 L69.4 47 L66.6 54.6 L61 48.6 M54 19 L76.4 44 M54 19 L69.4 47"/>
+<path class="ptail" d="M55 66 C63 68 68 64 73 60 C78 56 84 57 90 54 M52 73 C60 74 68 72 74 66.6 C79 62.4 85 61.4 91 56.4 M90 54 C92 51.4 96 52.4 95.4 55.6 C94.8 58 91.6 57.4 92 55.4"/></svg>`;
+
+// Curled up asleep, in the manner of Smaug on his hoard: a spined hump, the wing folded on its flank,
+// the tail wrapped round the front and the horned head laid down on it with one eye shut.
+const SLEEP = `<svg class="sleepd" viewBox="0 0 80 46" overflow="visible">
+<path d="M24 41 C22 32 28 22 38 19 C46 16.5 58 16 66 22 C72 27 73 35 70 42"/>
+<path d="M34.5 20.4 L37.3 15.0 L40.3 18.4 L44.2 13.5 L46.4 17.4 L51.1 13.2 L52.5 17.4 L57.9 14.1 L58.6 18.4 L64.6 16.5 L64.2 20.9 L70.4 20.9 L68.7 25.0 L73.2 27.9 L71.2 30.5 L74.3 34.9 L71.5 36.6"/>
+<path d="M35 27 L47 19.5 M47 19.5 L63 28.5 M47 19.5 L59 34 M47 19.5 L49 36 M63 28.5 Q60 30.5 59 34 Q54 33 49 36"/>
+<path d="M70 36.6 C62 39.8 48 39 34 39.2 C27 39.3 20 38 15 38.8"/>
+<path d="M70.4 41.8 C60 42 46 41.9 34 41.9 C25 41.9 17 42 11.5 41.7 C7 41.4 5.2 38.6 7.4 36.6 C9.2 35 12.2 36.4 11.2 38.6"/>
+<path d="M58 41.6 C59.4 37.6 64.4 37.6 65.8 41.6 M59.4 42 l-.8 1.8 M62 42 l0 1.9 M64.4 42 l.8 1.8"/>
+<path d="M3 36 L10.5 29.4 C15.5 25.6 23 25.4 28 28.4 C31.2 30.4 31 35.6 27.6 38 L9 38 C6 38 4 37.4 3 36Z"/>
+<path d="M12.8 30.4 L19.6 29 M13.6 32.6 q2.6 1.8 5.4 -.2"/><circle class="dot" cx="5.6" cy="34" r=".7"/>
+<path d="M22.6 27.6 C23.8 23 29.4 20.6 35 21.4 C31.4 23.2 29.6 25.4 28.8 28.4Z"/>
+<path d="M29 28.6 C30.4 25.6 34 24.4 37.6 25.4 C34.6 26.6 33 28.4 32.2 30.6Z"/></svg>`;
 
 const CSS = `
 .wyv{position:absolute;left:0;top:0;width:60px;height:39px;pointer-events:none;visibility:hidden;will-change:transform;z-index:50}
 .wyv svg{position:absolute;display:block}
 .wyv svg *{fill:none;stroke:var(--color-body);stroke-width:1.3px;stroke-linecap:round;stroke-linejoin:round;vector-effect:non-scaling-stroke}
 .wyv svg .dot{fill:var(--color-body);stroke:none}
-.wyv .fly{left:0;top:0;width:60px}.wyv .perch{left:13px;top:-2px;width:34px;display:none}
+.wyv .fly{left:0;top:0;width:60px}.wyv .perch{left:-4px;top:-2px;width:68px;display:none}
 .wyv.perched .fly{display:none}.wyv.perched .perch{display:block}
+.wyv .sleepd{left:2px;top:9px;width:56px;display:none;transform-origin:50% 100%}
+.wyv.sleeping .perch{display:none!important}
+.wyv.sleeping .sleepd{display:block;animation:wv-sleepb 4.2s ease-in-out infinite}
+@keyframes wv-sleepb{50%{transform:scaleY(1.035)}}
 .wyv .wf{opacity:0}
 .wyv.glide .wf.pm{opacity:1}
 .wyv.flap .wf{animation:wv-show .8s steps(1,end) infinite;animation-delay:calc(var(--i) * -.2s)}
@@ -89,7 +109,7 @@ export function mountWyvern(box: HTMLElement) {
   const el = document.createElement("div");
   el.className = "wyv perched";
   el.setAttribute("aria-hidden", "true");
-  el.innerHTML = FLY + PERCH;
+  el.innerHTML = FLY + PERCH + SLEEP;
   // It lives in the section's heading, which stays visible when the section is collapsed.
   const head = box.querySelector<HTMLElement>(":scope > summary") ?? box;
   if (getComputedStyle(head).position === "static") head.style.position = "relative";
@@ -172,7 +192,7 @@ export function mountWyvern(box: HTMLElement) {
     // Going down, it glides on spread wings; any other way it flaps.
     const down = next.py - cy > 40;
     const side = (next.px - cx) * 0.22;
-    el.classList.remove("perched");
+    el.classList.remove("perched", "sleeping");
     el.classList.add(down ? "glide" : "flap");
     try {
       await leg(
@@ -218,22 +238,33 @@ export function mountWyvern(box: HTMLElement) {
     const wing = part(".pwing");
     // the perched sprite faces left by default; scaleX(-1) on the wrapper flips it
     if (name === "sleep") {
-      // Curls up: the body hunkers down, the head tucks in against it, the wing folds over and the tail
-      // wraps round the front. Held for a while with slow breathing and the odd puff of smoke.
+      // Hunkers down, curls into its coil and sleeps for a good while with slow breathing and the odd
+      // puff of smoke from the nostril, then stretches back up.
       const body = el.querySelector<SVGElement>(".perch")!;
-      const tail = part(".ptail");
-      const D = 16000;
-      const settle = (to: Keyframe, mid: Keyframe) => [{ transform: "none" }, { ...to, offset: 0.12 }, { ...mid, offset: 0.5 }, { ...to, offset: 0.9 }, { transform: "none" }];
-      const anims = [
-        body.animate(settle({ transform: "scale(1.08,.7)" }, { transform: "scale(1.1,.67)" }), { duration: D, easing: "ease-in-out" }),
-        head.animate(settle({ transform: "rotate(-62deg) translate(4px,11px)" }, { transform: "rotate(-66deg) translate(4px,12px)" }), { duration: D, easing: "ease-in-out" }),
-        wing.animate(settle({ transform: "scale(.78,.86) translate(3px,3px)" }, { transform: "scale(.76,.84) translate(3px,3px)" }), { duration: D, easing: "ease-in-out" }),
-        tail.animate(settle({ transform: "rotate(-118deg)" }, { transform: "rotate(-124deg)" }), { duration: D, easing: "ease-in-out" }),
-      ];
-      for (let i = 1; i <= 4; i++) setTimeout(() => puff(10, 14), i * 3200);
-      await Promise.all(anims.map(hold));
+      const coil = el.querySelector<SVGElement>(".sleepd")!;
+      const down = [{ transform: "none" }, { transform: "scale(1.08,.72)" }];
+      try {
+        await Promise.all([
+          hold(body.animate(down, { duration: 800, easing: "ease-in-out", fill: "forwards" })),
+          hold(head.animate([{ transform: "rotate(0)" }, { transform: "rotate(-48deg) translate(3px,9px)" }], { duration: 800, easing: "ease-in-out", fill: "forwards" })),
+        ]);
+        el.classList.add("sleeping");
+        body.getAnimations().forEach((a) => a.cancel());
+        head.getAnimations().forEach((a) => a.cancel());
+        await hold(coil.animate([{ opacity: 0, transform: "scale(.92,.75)" }, { opacity: 1, transform: "none" }], { duration: 500, easing: "ease-out" }));
+        for (let i = 1; i <= 4; i++) setTimeout(() => el.classList.contains("sleeping") && puff(3, 26), i * 3000);
+        await sleep(13000);
+      } finally {
+        if (el.classList.contains("sleeping")) {
+          el.classList.remove("sleeping");
+          await Promise.all([
+            hold(body.animate([{ transform: "scale(1.08,.72)" }, { transform: "none" }], { duration: 700, easing: "ease-out" })),
+            hold(head.animate([{ transform: "rotate(-30deg) translate(2px,6px)" }, { transform: "rotate(8deg)", offset: 0.6 }, { transform: "rotate(0)" }], { duration: 700, easing: "ease-out" })),
+          ]);
+        }
+      }
     } else if (name === "stretch") {
-      const spread = wing.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.35 }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.7 }, { transform: "rotate(6deg) scale(1)", offset: 0.85 }, { transform: "rotate(0) scale(1)" }], { duration: 4200, easing: "ease-in-out" });
+      const spread = wing.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.35 }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.7 }, { transform: "rotate(6deg) scale(1)", offset: 0.85 }, { transform: "rotate(0) scale(1)" }], { duration: 4200, easing: "ease-in-out" });
       const lift = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.35 }, { transform: "rotate(12deg) translate(0,-2px)", offset: 0.7 }, { transform: "rotate(0)" }], { duration: 4200, easing: "ease-in-out" });
       await Promise.all([hold(spread), hold(lift)]);
     } else if (name === "yawn") {
@@ -258,11 +289,13 @@ export function mountWyvern(box: HTMLElement) {
   // the section heading, so the click must not toggle the section.)
   const react = async () => {
     if (calm() || !el.classList.contains("perched")) return;
+    // a poke wakes it, and it is not pleased
+    el.classList.remove("sleeping");
     const head = part(".phead");
     const wing = part(".pwing");
     const hop = el.animate([{ translate: "0 0" }, { translate: "0 -14px", offset: 0.35 }, { translate: "0 0" }], { duration: 650, easing: "ease-out" });
     const flare = wing.animate(
-      [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.3 }, { transform: "rotate(-38deg) scale(1.9,1.5) translate(-3px,-5px)", offset: 0.7 }, { transform: "rotate(0) scale(1)" }],
+      [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.3 }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.7 }, { transform: "rotate(0) scale(1)" }],
       { duration: 1700, easing: "ease-in-out" },
     );
     const roar = head.animate([{ transform: "rotate(0)" }, { transform: "rotate(18deg) translate(0,-2px)", offset: 0.25 }, { transform: "rotate(18deg) translate(0,-2px)", offset: 0.65 }, { transform: "rotate(0)" }], { duration: 1700, easing: "ease-in-out" });
