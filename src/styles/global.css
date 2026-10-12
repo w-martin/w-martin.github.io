@@ -68,15 +68,17 @@
 
 /* Dark-mode overrides for the same tokens -- every text-accent/text-body/border-rule
    utility in the site adapts automatically, no per-usage dark: prefixing needed. */
-/* The light-mode paper: a tiny SVG tile, rasterised once, layering fine grain, horizontal fibres and
-   a slow mottling in warm brown, plus a light speckle. The marks are faint (the body text still
-   measures well above 6:1 on the darkest of them) but enough to read as paper, not a flat grey. */
+/* The light-mode paper: a small pre-rendered image tile (tools/paper/make_paper.py), decoded once instead
+   of running noise filters on every repaint. Faint on purpose: body text stays above 6:1 on its darkest
+   pixel. Shown at half its pixel size so it stays crisp on dense screens. */
 :root {
-  --paper-grain: url("data:image/svg+xml,%3Csvg%20xmlns='http://www.w3.org/2000/svg'%20width='256'%20height='256'%3E%3Cfilter%20id='a'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.85'%20numOctaves='3'%20seed='4'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20values='0%200%200%200%20.28%200%200%200%200%20.22%200%200%200%200%20.13%201.6%200%200%200%20-.68'/%3E%3C/filter%3E%3Cfilter%20id='b'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.02%20.55'%20numOctaves='2'%20seed='9'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20values='0%200%200%200%20.3%200%200%200%200%20.24%200%200%200%200%20.14%201.5%200%200%200%20-.64'/%3E%3C/filter%3E%3Cfilter%20id='c'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.011'%20numOctaves='3'%20seed='2'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20values='0%200%200%200%20.4%200%200%200%200%20.32%200%200%200%200%20.18%201.7%200%200%200%20-.72'/%3E%3C/filter%3E%3Cfilter%20id='d'%20x='0'%20y='0'%20width='100%25'%20height='100%25'%3E%3CfeTurbulence%20type='fractalNoise'%20baseFrequency='.9'%20numOctaves='2'%20seed='11'%20stitchTiles='stitch'/%3E%3CfeColorMatrix%20values='0%200%200%200%201%200%200%200%200%201%200%200%200%200%20.97%201.5%200%200%200%20-.7'/%3E%3C/filter%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url%28%23c%29'%20opacity='.07'/%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url%28%23b%29'%20opacity='.1'/%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url%28%23a%29'%20opacity='.14'/%3E%3Crect%20width='100%25'%20height='100%25'%20filter='url%28%23d%29'%20opacity='.3'/%3E%3C/svg%3E");
+  --paper-grain: url("../assets/paper-light.webp");
+  --paper-size: 160px;
 }
 
 .dark {
   /* The dark counterpart: a warm charcoal base with a faint light speckle, under a darker title bar. */
+  --paper-size: auto;
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .96 0 0 0 0 .9 .2 0 0 0 -.06'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
   --color-accent: #93c4ec;
   --color-paper: #1e1b18;
@@ -112,6 +114,7 @@ html.dark {
 body {
   @apply font-serif text-body;
   background-image: var(--paper-grain);
+  background-size: var(--paper-size);
 }
 
 .glint-sweep {
@@ -322,6 +325,16 @@ main > details[open] > summary::before {
 /* The creatures roam across the page and can drift past its edges. Clip sideways overflow at the very
    edge of the page (clip, not hidden, so the sticky header still works), not at the narrow content
    column, which would also cut off the covers' glow. */
+/* Creatures move constantly: they must never be picked as the anchor that holds the scroll position. */
+.scribe,
+.wyv,
+.wisp-layer {
+  overflow-anchor: none;
+}
+
+/* On both, because phones decide horizontal panning from the root as well as the body: otherwise a
+   creature flying past the edge widens the scrollable page and the page can be dragged sideways. */
+html,
 body {
   overflow-x: clip;
 }

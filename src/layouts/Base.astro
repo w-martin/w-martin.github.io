@@ -342,6 +342,7 @@ const nav = [
           document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "only light";
         };
         if (document.documentElement.dataset.motion === "calm") return flip();
+        vt?.doFlip?.();
         if (vt) vt.transition?.skipTransition?.();
         endVt(true);
         document.querySelectorAll(".theme-veil").forEach((n) => n.remove());
@@ -359,22 +360,42 @@ const nav = [
         ring.className = "theme-veil";
         ring.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646";
 
-        // No View Transitions, or a touch device (where the full snapshot transition glitched): the theme
-        // switches at once and a lighter veil still rolls out
-        // over it, so the change is never a plain snap.
+        // No View Transitions, or a touch device (where the full snapshot transition glitched): a disc of
+        // the new paper colour sweeps out from the toggle with the veil on its front, the theme swaps
+        // underneath once it covers the screen, and the disc fades away. One solid layer, so it stays
+        // cheap on a phone, and the change is wiped in rather than snapping.
         if (!document.startViewTransition || matchMedia("(pointer: coarse)").matches) {
-          flip();
+          const toDark = !document.documentElement.classList.contains("dark");
+          const disc = document.createElement("div");
+          disc.style.cssText = `position:absolute;inset:0;background:${toDark ? "#1e1b18" : "#dfdfdc"};clip-path:circle(0px at ${x}px ${y}px)`;
+          ring.appendChild(disc);
           document.body.appendChild(ring);
-          vt = { ring };
+          let flipped = false;
+          const doFlip = () => {
+            if (flipped) return;
+            flipped = true;
+            flip();
+          };
+          vt = { ring, doFlip };
           const t0 = performance.now();
           const prog = () => {
             const t = Math.min(1, (performance.now() - t0) / DURATION);
             return t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
           };
-          drawVeil(ring, x, y, radius, prog, () => performance.now() - t0 >= DURATION, warm);
+          const FADE = 500;
+          const sweep = () => {
+            if (!ring.isConnected) return;
+            const p = prog();
+            disc.style.clipPath = `circle(${radius * p}px at ${x}px ${y}px)`;
+            if (p < 1) return requestAnimationFrame(sweep);
+            doFlip();
+            disc.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE, easing: "ease-out", fill: "forwards" });
+          };
+          sweep();
+          drawVeil(ring, x, y, radius, prog, () => performance.now() - t0 >= DURATION + FADE, warm);
           setTimeout(() => {
             if (vt && vt.ring === ring) endVt(false);
-          }, DURATION + 100);
+          }, DURATION + FADE + 100);
           return;
         }
 
