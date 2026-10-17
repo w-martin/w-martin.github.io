@@ -39,13 +39,14 @@ const SLEEP = `<svg class="sleepd" viewBox="0 0 80 46" overflow="visible">
 <path d="M24 41 C22 32 28 22 38 19 C46 16.5 58 16 66 22 C72 27 73 35 70 42"/>
 <path d="M34.5 20.4 L37.3 15.0 L40.3 18.4 L44.2 13.5 L46.4 17.4 L51.1 13.2 L52.5 17.4 L57.9 14.1 L58.6 18.4 L64.6 16.5 L64.2 20.9 L70.4 20.9 L68.7 25.0 L73.2 27.9 L71.2 30.5 L74.3 34.9 L71.5 36.6"/>
 <path d="M35 27 L47 19.5 M47 19.5 L63 28.5 M47 19.5 L59 34 M47 19.5 L49 36 M63 28.5 Q60 30.5 59 34 Q54 33 49 36"/>
-<path d="M70 36.6 C62 39.8 48 39 34 39.2 C27 39.3 20 38 15 38.8"/>
+<g class="stail"><path d="M70 36.6 C62 39.8 48 39 34 39.2 C27 39.3 20 38 15 38.8"/>
 <path d="M70.4 41.8 C60 42 46 41.9 34 41.9 C25 41.9 17 42 11.5 41.7 C7 41.4 5.2 38.6 7.4 36.6 C9.2 35 12.2 36.4 11.2 38.6"/>
+</g>
 <path d="M58 41.6 C59.4 37.6 64.4 37.6 65.8 41.6 M59.4 42 l-.8 1.8 M62 42 l0 1.9 M64.4 42 l.8 1.8"/>
-<path d="M3 36 L10.5 29.4 C15.5 25.6 23 25.4 28 28.4 C31.2 30.4 31 35.6 27.6 38 L9 38 C6 38 4 37.4 3 36Z"/>
+<g class="shead"><path d="M3 36 L10.5 29.4 C15.5 25.6 23 25.4 28 28.4 C31.2 30.4 31 35.6 27.6 38 L9 38 C6 38 4 37.4 3 36Z"/>
 <path d="M12.8 30.4 L19.6 29 M13.6 32.6 q2.6 1.8 5.4 -.2"/><circle class="dot" cx="5.6" cy="34" r=".7"/>
 <path d="M22.6 27.6 C23.8 23 29.4 20.6 35 21.4 C31.4 23.2 29.6 25.4 28.8 28.4Z"/>
-<path d="M29 28.6 C30.4 25.6 34 24.4 37.6 25.4 C34.6 26.6 33 28.4 32.2 30.6Z"/></svg>`;
+<path d="M29 28.6 C30.4 25.6 34 24.4 37.6 25.4 C34.6 26.6 33 28.4 32.2 30.6Z"/></g></svg>`;
 
 const CSS = `
 .wyv{position:absolute;left:0;top:0;width:60px;height:39px;pointer-events:none;visibility:hidden;will-change:transform;z-index:50}
@@ -55,6 +56,7 @@ const CSS = `
 .wyv .fly{left:0;top:0;width:60px}.wyv .perch{left:-4px;top:-2px;width:68px;display:none}
 .wyv.perched .fly{display:none}.wyv.perched .perch{display:block}
 .wyv .sleepd{left:2px;top:9px;width:56px;display:none;transform-origin:50% 100%}
+.wyv .stail{transform-box:view-box;transform-origin:70px 40px}.wyv .shead{transform-box:view-box;transform-origin:28px 36px}
 .wyv.sleeping .perch{display:none!important}
 .wyv.sleeping .sleepd{display:block;animation:wv-sleepb 4.2s ease-in-out infinite}
 @keyframes wv-sleepb{50%{transform:scaleY(1.035)}}
@@ -165,7 +167,7 @@ export function mountWyvern(box: HTMLElement) {
   el.style.visibility = "visible";
 
   /** One flight leg along a Bezier path; the sprite faces its direction of travel. */
-  const leg = async (path: [P, P, P, P], ms: number, flare: boolean) => {
+  const leg = async (path: [P, P, P, P], ms: number, flare: boolean, launch = false) => {
     const dir = path[3][0] >= path[0][0] ? 1 : -1;
     const keys = Array.from({ length: 28 }, (_, i) => {
       const t = i / 27;
@@ -173,7 +175,8 @@ export function mountWyvern(box: HTMLElement) {
       const [x, y] = bez(...path, e);
       const [x2, y2] = bez(...path, Math.min(1, e + 0.02));
       let tilt = clamp((Math.atan2(y2 - y, Math.abs(x2 - x) + 0.01) * 180) / Math.PI, -26, 26);
-      if (flare && e > 0.84) tilt = tilt + (-34 - tilt) * ((e - 0.84) / 0.16);
+      if (flare && e > 0.8) tilt = tilt + (-52 - tilt) * ((e - 0.8) / 0.2) ** 1.5;
+      if (launch && t < 0.14) tilt = tilt + (-55 - tilt) * (1 - t / 0.14) ** 2;
       return { transform: `translate(${x}px,${y}px) scaleX(${dir}) rotate(${tilt}deg)`, offset: t };
     });
     const anim = el.animate(keys, { duration: ms, fill: "forwards" });
@@ -192,6 +195,15 @@ export function mountWyvern(box: HTMLElement) {
     // Going down, it glides on spread wings; any other way it flaps.
     const down = next.py - cy > 40;
     const side = (next.px - cx) * 0.22;
+    // crouch, spring up on raised wings, and only then swap to the flying sprite (nose-up, levelling out)
+    const [b, h, w, t] = [".perch", ".phead", ".pwing", ".ptail"].map((c) => el.querySelector<SVGElement>(c)!);
+    const pose = (n: SVGElement, to: string, ms: number, easing: string) => hold(n.animate([{}, { transform: to }], { duration: ms, easing, fill: "forwards" }));
+    const reset = () => [b, h, w, t, el].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
+    if (el.classList.contains("perched")) {
+      await Promise.all([pose(b, "scale(1.05,.84)", 280, "ease-in"), pose(h, "rotate(-12deg) translate(0,3px)", 280, "ease-in"), pose(w, "rotate(-26deg) scale(1.25,1.2) translate(-2px,-3px)", 280, "ease-in"), pose(t, "rotate(8deg)", 280, "ease-in")]);
+      await Promise.all([pose(b, "scale(.95,1.1)", 170, "ease-out"), pose(h, "rotate(8deg) translate(0,-2px)", 170, "ease-out"), pose(w, "rotate(-44deg) scale(1.45,1.35) translate(-3px,-6px)", 170, "ease-out"), hold(el.animate([{ translate: "0 0" }, { translate: "0 -9px" }], { duration: 170, easing: "ease-out", fill: "forwards" }))]);
+    }
+    reset();
     el.classList.remove("perched", "sleeping");
     el.classList.add(down ? "glide" : "flap");
     try {
@@ -204,6 +216,7 @@ export function mountWyvern(box: HTMLElement) {
         ],
         Math.min(4200, Math.max(2200, dist / 0.1)),
         true,
+        true,
       );
     } finally {
       // (also runs if switching to calm mid-flight cancelled the animation)
@@ -212,6 +225,15 @@ export function mountWyvern(box: HTMLElement) {
       cy = m.m42;
       el.classList.remove("flap", "glide");
       el.classList.add("perched");
+      // touchdown: wings still spread, body squashed, head up; then it settles and folds them
+      if (!calm()) {
+        await Promise.all([
+          hold(b.animate([{ transform: "scale(1.06,.86)" }, { transform: "scale(.99,1.03)", offset: 0.6 }, { transform: "none" }], { duration: 520, easing: "ease-out" })),
+          hold(w.animate([{ transform: "rotate(-40deg) scale(1.4,1.3) translate(-3px,-5px)" }, { transform: "rotate(-22deg) scale(1.22,1.15) translate(-2px,-3px)", offset: 0.45 }, { transform: "rotate(3deg)", offset: 0.8 }, { transform: "none" }], { duration: 900, easing: "ease-in-out" })),
+          hold(h.animate([{ transform: "rotate(10deg) translate(0,-3px)" }, { transform: "rotate(-4deg)", offset: 0.6 }, { transform: "none" }], { duration: 800, easing: "ease-out" })),
+          hold(t.animate([{ transform: "rotate(-16deg)" }, { transform: "none" }], { duration: 700, easing: "ease-out" })),
+        ]);
+      }
     }
   };
 
@@ -242,26 +264,49 @@ export function mountWyvern(box: HTMLElement) {
       // puff of smoke from the nostril, then stretches back up.
       const body = el.querySelector<SVGElement>(".perch")!;
       const coil = el.querySelector<SVGElement>(".sleepd")!;
-      const down = [{ transform: "none" }, { transform: "scale(1.08,.72)" }];
+      const sh = coil.querySelector<SVGElement>(".shead")!;
+      const st = coil.querySelector<SVGElement>(".stail")!;
+      const go = (n: Element, keys: Keyframe[], ms: number, easing = "ease-in-out") => hold(n.animate(keys, { duration: ms, easing, fill: "forwards" }));
+      // coil still half-risen: head lifted, tail trailing out, back a little taller
+      const risen = [{ transform: "rotate(-26deg) translate(0,-3px)" }, { transform: "none" }];
+      const trail = [{ transform: "rotate(-18deg) scaleX(.9)" }, { transform: "none" }];
       try {
+        // 1 crouch: weight settles, wing tucks, head lowers
         await Promise.all([
-          hold(body.animate(down, { duration: 800, easing: "ease-in-out", fill: "forwards" })),
-          hold(head.animate([{ transform: "rotate(0)" }, { transform: "rotate(-48deg) translate(3px,9px)" }], { duration: 800, easing: "ease-in-out", fill: "forwards" })),
+          go(body, [{ transform: "none" }, { transform: "scale(1.04,.88)" }], 420),
+          go(head, [{ transform: "rotate(0)" }, { transform: "rotate(-24deg) translate(1px,4px)" }], 420),
+          go(part(".pwing"), [{ transform: "rotate(0)" }, { transform: "rotate(5deg)" }], 420),
         ]);
+        // 2 lies down: body flattens, head almost on the ground
+        await Promise.all([
+          go(body, [{ transform: "scale(1.04,.88)" }, { transform: "scale(1.08,.72)" }], 450),
+          go(head, [{ transform: "rotate(-24deg) translate(1px,4px)" }, { transform: "rotate(-48deg) translate(3px,9px)" }], 450),
+        ]);
+        // 3 the coil: swap to the lying sprite, then head and tail settle into it
         el.classList.add("sleeping");
         body.getAnimations().forEach((a) => a.cancel());
         head.getAnimations().forEach((a) => a.cancel());
-        await hold(coil.animate([{ opacity: 0, transform: "scale(.92,.75)" }, { opacity: 1, transform: "none" }], { duration: 500, easing: "ease-out" }));
+        part(".pwing").getAnimations().forEach((a) => a.cancel());
+        await Promise.all([
+          go(coil, [{ transform: "scale(1,1.12)" }, { transform: "none" }], 700, "ease-out"),
+          go(sh, risen, 700, "ease-out"),
+          go(st, trail, 800, "ease-out"),
+        ]);
         for (let i = 1; i <= 4; i++) setTimeout(() => el.classList.contains("sleeping") && puff(3, 26), i * 3000);
         await sleep(13000);
       } finally {
         if (el.classList.contains("sleeping")) {
+          // wakes: head lifts, tail slides out, then it rises onto its feet
+          await Promise.all([go(sh, [...risen].reverse(), 500), go(st, [...trail].reverse(), 500), go(coil, [{ transform: "none" }, { transform: "scale(1,1.1)" }], 500)]);
           el.classList.remove("sleeping");
+          [sh, st, coil].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
           await Promise.all([
-            hold(body.animate([{ transform: "scale(1.08,.72)" }, { transform: "none" }], { duration: 700, easing: "ease-out" })),
-            hold(head.animate([{ transform: "rotate(-30deg) translate(2px,6px)" }, { transform: "rotate(8deg)", offset: 0.6 }, { transform: "rotate(0)" }], { duration: 700, easing: "ease-out" })),
+            go(body, [{ transform: "scale(1.08,.72)" }, { transform: "scale(1.04,.88)", offset: 0.5 }, { transform: "none" }], 700, "ease-out"),
+            go(head, [{ transform: "rotate(-48deg) translate(3px,9px)" }, { transform: "rotate(-20deg) translate(1px,4px)", offset: 0.45 }, { transform: "rotate(8deg)", offset: 0.8 }, { transform: "rotate(0)" }], 700, "ease-out"),
           ]);
+          [body, head].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
         }
+        sh.getAnimations().forEach((a) => a.cancel());
       }
     } else if (name === "stretch") {
       const spread = wing.animate([{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.35 }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.7 }, { transform: "rotate(6deg) scale(1)", offset: 0.85 }, { transform: "rotate(0) scale(1)" }], { duration: 4200, easing: "ease-in-out" });
