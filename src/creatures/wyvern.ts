@@ -252,6 +252,26 @@ export function mountWyvern(box: HTMLElement) {
     ).finished.then(() => o.remove());
   };
   const hold = (a: Animation) => a.finished.catch(() => undefined);
+  // Waking from a sleep: head lifts, tail slides out, then it rises onto its feet.
+  const wake = async () => {
+    if (!el.classList.contains("sleeping")) return;
+    const body = el.querySelector<SVGElement>(".perch")!;
+    const coil = el.querySelector<SVGElement>(".sleepd")!;
+    const sh = coil.querySelector<SVGElement>(".shead")!;
+    const st = coil.querySelector<SVGElement>(".stail")!;
+    const head = part(".phead");
+    const go = (n: Element, keys: Keyframe[], ms: number, easing = "ease-in-out") => hold(n.animate(keys, { duration: ms, easing, fill: "forwards" }));
+    const risen = [{ transform: "rotate(-26deg) translate(0,-3px)" }, { transform: "none" }];
+    const trail = [{ transform: "rotate(-18deg) scaleX(.9)" }, { transform: "none" }];
+    await Promise.all([go(sh, [...risen].reverse(), 500), go(st, [...trail].reverse(), 500), go(coil, [{ transform: "none" }, { transform: "scale(1,1.1)" }], 500)]);
+    el.classList.remove("sleeping");
+    [sh, st, coil].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
+    await Promise.all([
+      go(body, [{ transform: "scale(1.08,.72)" }, { transform: "scale(1.04,.88)", offset: 0.5 }, { transform: "none" }], 700, "ease-out"),
+      go(head, [{ transform: "rotate(-48deg) translate(3px,9px)" }, { transform: "rotate(-20deg) translate(1px,4px)", offset: 0.45 }, { transform: "rotate(8deg)", offset: 0.8 }, { transform: "rotate(0)" }], 700, "ease-out"),
+    ]);
+    [body, head].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
+  };
   const SCENES = ["sleep", "stretch", "yawn", "watch"] as const;
   const scene = async () => {
     if (calm() || el.classList.contains("flap") || el.classList.contains("glide")) return;
@@ -295,17 +315,7 @@ export function mountWyvern(box: HTMLElement) {
         for (let i = 1; i <= 4; i++) setTimeout(() => el.classList.contains("sleeping") && puff(3, 26), i * 3000);
         await sleep(13000);
       } finally {
-        if (el.classList.contains("sleeping")) {
-          // wakes: head lifts, tail slides out, then it rises onto its feet
-          await Promise.all([go(sh, [...risen].reverse(), 500), go(st, [...trail].reverse(), 500), go(coil, [{ transform: "none" }, { transform: "scale(1,1.1)" }], 500)]);
-          el.classList.remove("sleeping");
-          [sh, st, coil].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
-          await Promise.all([
-            go(body, [{ transform: "scale(1.08,.72)" }, { transform: "scale(1.04,.88)", offset: 0.5 }, { transform: "none" }], 700, "ease-out"),
-            go(head, [{ transform: "rotate(-48deg) translate(3px,9px)" }, { transform: "rotate(-20deg) translate(1px,4px)", offset: 0.45 }, { transform: "rotate(8deg)", offset: 0.8 }, { transform: "rotate(0)" }], 700, "ease-out"),
-          ]);
-          [body, head].forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
-        }
+        await wake();
         sh.getAnimations().forEach((a) => a.cancel());
       }
     } else if (name === "stretch") {
@@ -335,10 +345,10 @@ export function mountWyvern(box: HTMLElement) {
   const react = async () => {
     if (calm() || !el.classList.contains("perched")) return;
     // a poke wakes it, and it is not pleased
-    el.classList.remove("sleeping");
+    await wake();
     const head = part(".phead");
     const wing = part(".pwing");
-    const hop = el.animate([{ translate: "0 0" }, { translate: "0 -14px", offset: 0.35 }, { translate: "0 0" }], { duration: 650, easing: "ease-out" });
+    const hop = el.animate([{ translate: "0 0" }, { translate: "0 2px", offset: 0.18 }, { translate: "0 -14px", offset: 0.5 }, { translate: "0 0" }], { duration: 900, easing: "ease-in-out" });
     const flare = wing.animate(
       [{ transform: "rotate(0) scale(1)" }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.3 }, { transform: "rotate(-30deg) scale(1.3,1.25) translate(-2px,-4px)", offset: 0.7 }, { transform: "rotate(0) scale(1)" }],
       { duration: 1700, easing: "ease-in-out" },

@@ -209,9 +209,30 @@ export function mountHermit(summary: HTMLElement) {
   // down plays them backwards.
   const RISE_BODY: [number, number, number][] = [[0, 42, 9], [0.16, 40, 8.5], [0.3, 36, 7.5], [0.42, 41, 8.8], [0.6, 26, 5], [0.82, 10, 1.5], [1, 0, 0]];
   const RISE_LEGS: [number, string][] = [[0, "z"], [0.14, "a"], [0.5, "b"], [0.76, "c"]];
+  // The sit, lie and walk sprites are different drawings from the rise frames, so swapping them
+  // is a pop. A copy of whatever is showing stays behind (pinned by its bottom edge, since the box grows upward) and fades out while the rise sprite fades in.
+  const FADE_MS = 260;
+  const leaveBehind = () => {
+    el.querySelectorAll<HTMLElement>(":scope > .sit:not(.ghost), :scope > .lie:not(.ghost), :scope > .walk:not(.ghost)").forEach((n) => {
+      if (getComputedStyle(n).display === "none") return;
+      const ghost = n.cloneNode(true) as HTMLElement;
+      ghost.classList.remove("pose");
+      ghost.classList.add("ghost");
+      // the lying sprite's parts are shown by data attributes on the hermit, which are about to go
+      const parts = n.querySelectorAll<SVGElement>("*");
+      ghost.querySelectorAll<SVGElement>("*").forEach((g, i) => (g.style.visibility = getComputedStyle(parts[i]).visibility));
+      ghost.style.cssText = `display:block;position:absolute;left:${n.offsetLeft}px;bottom:${el.offsetHeight - n.offsetTop - n.offsetHeight}px;margin:0;pointer-events:none`;
+      el.appendChild(ghost);
+      ghost.animate({ opacity: [1, 0] }, { duration: FADE_MS, easing: "ease-in-out", fill: "forwards" });
+      // a timer, not `finished`: other code cancels animations and a cancelled fade would strand the copy
+      setTimeout(() => ghost.remove(), FADE_MS);
+    });
+  };
   const startRise = (ms: number, reverse = false) => {
+    leaveBehind();
     el.classList.remove("writing", "resting", "walking");
     el.classList.add("rising");
+    el.querySelector(".rise")?.animate({ opacity: [0, 1] }, { duration: FADE_MS, easing: "ease-in-out" });
     const swing = (sel: string, k: number) =>
       el.querySelector(sel)?.animate(
         RISE_BODY.map(([offset, deg, dy]) => ({ offset, transform: `translate(0,${k ? 0 : dy}px) rotate(${deg * (k || 1)}deg)`, easing: "ease-in-out" })),
@@ -235,27 +256,34 @@ export function mountHermit(summary: HTMLElement) {
   const standUp = async (ms = 1000) => {
     startRise(ms);
     await sleep(ms);
-    endRise("walking");
+    if (!gone) endRise("walking");
   };
   const sitDown = async (ms = 900) => {
     startRise(ms, true);
     await sleep(ms);
-    endRise("writing");
+    if (!gone) endRise("writing");
   };
 
   const fall = async () => {
     gone = true;
+    leaveBehind();
+    // Cancelling a walk or hop would snap him back to where it began, so pin him where he is first.
+    const here = getComputedStyle(el);
+    const m = new DOMMatrix(here.transform);
+    const heldY = here.translate;
     el.getAnimations().forEach((a) => a.cancel());
+    setX(m.m41, m.a < 0 ? -1 : 1);
+    el.style.translate = heldY === "none" ? "0 0" : heldY;
     el.classList.remove("writing", "resting", "walking", "ending");
     delete el.dataset.scene;
     delete el.dataset.nap;
-    el.querySelectorAll(".sit svg, .lie").forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
+    el.querySelectorAll(".sit:not(.ghost) svg, .lie:not(.ghost)").forEach((n) => n.getAnimations().forEach((a) => a.cancel()));
     const startY = parseFloat(el.style.translate.split(" ")[1]) || 0;
 
     // One continuous path, with no jumps in speed: he gets up with a start, stumbles forward and trips,
     // tumbles, flicks a wand as he falls, and the bubble pops up and slows him to a stop. It then drifts
     // up from rest, never stopping, until a gust adds sideways speed and blows it off the screen.
-    const face = /scaleX\(-1\)/.test(el.style.transform) ? -1 : 1;
+    const face = m.a < 0 ? -1 : 1;
     const dir = Math.random() < 0.5 ? 1 : -1;
     const r = el.getBoundingClientRect();
     const dist = (dir > 0 ? innerWidth - r.left : r.right) + 200;
@@ -415,6 +443,7 @@ export function mountHermit(summary: HTMLElement) {
       for (let i = 0; i < 4 && Math.abs(target - x) < 90; i++) target = clampX(rand(0.08, 0.9) * width());
       await slide(target, speed);
     } finally {
+      if (gone) return;
       // (also runs if switching to calm mid-walk cancelled the animation)
       const m = new DOMMatrix(getComputedStyle(el).transform);
       x = m.m41;
@@ -469,6 +498,7 @@ export function mountHermit(summary: HTMLElement) {
         await new Promise((res) => setTimeout(res, 2200));
       }
     } finally {
+      if (gone) return;
       el.classList.remove("ending");
       const wasNap = el.dataset.nap === "doze";
       delete el.dataset.scene;

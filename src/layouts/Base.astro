@@ -90,7 +90,7 @@ const nav = [
     </script>
   </head>
   <body class="min-h-screen flex flex-col bg-paper transition-colors">
-    <header id="site-header" class="no-anim sticky top-0 z-10 border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
+    <header id="site-header" class="no-anim sticky top-0 z-[60] border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
         <a href="/" class="bar-link font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
         <a
@@ -232,14 +232,30 @@ const nav = [
       // fade, while the new theme is revealed behind the edge.
 
       // A soft fog texture (fractal noise), rasterised once and tiled.
+      // Built once per colour and reused, so the browser rasterises each turbulence tile a single time
+      // (a fresh seed on every toggle meant re-rendering it mid-transition) and can warm it in advance.
+      const fogTiles = {};
       const fogTile = (warm) => {
+        const key = warm ? "warm" : "cool";
+        if (fogTiles[key]) return fogTiles[key];
         const svg =
           "<svg xmlns='http://www.w3.org/2000/svg' width='900' height='600'><filter id='f' x='0' y='0' width='100%' height='100%'>" +
-          "<feTurbulence type='fractalNoise' baseFrequency='.007 .011' numOctaves='3' seed='" + Math.floor(Math.random() * 50) + "' stitchTiles='stitch'/>" +
+          "<feTurbulence type='fractalNoise' baseFrequency='.007 .011' numOctaves='3' seed='" + (warm ? 7 : 31) + "' stitchTiles='stitch'/>" +
           "<feColorMatrix values='" + (warm ? "0 0 0 0 1  0 0 0 0 .78  0 0 0 0 .42" : "0 0 0 0 .70  0 0 0 0 .80  0 0 0 0 1") + "  2.1 0 0 0 -.78'/></filter>" +
           "<rect width='100%' height='100%' filter='url(%23f)'/></svg>";
-        return `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E")}")`;
+        return (fogTiles[key] = `url("data:image/svg+xml,${svg.replace(/#/g, "%23").replace(/</g, "%3C").replace(/>/g, "%3E")}")`);
       };
+      if (document.documentElement.dataset.motion !== "calm" && !matchMedia("(pointer: coarse)").matches) {
+        const warmUp = () => {
+          for (const warm of [false, true]) {
+            const probe = document.createElement("div");
+            probe.style.cssText = `position:fixed;left:0;top:0;width:1px;height:1px;opacity:.01;pointer-events:none;background-image:${fogTile(warm)}`;
+            document.body.appendChild(probe);
+            setTimeout(() => probe.remove(), 1500);
+          }
+        };
+        addEventListener("load", () => (window.requestIdleCallback || setTimeout)(warmUp));
+      }
 
       // warm: the dawn version, used going to the light theme (golden mist and glow).
       const drawVeil = (ring, x, y, radius, progress, done, warm) => {
@@ -268,7 +284,10 @@ const nav = [
           const el = document.createElement("span");
           const sz = m.size * 0.85;
           // small glowing lights, in the same colour as the wisp (the page's body colour)
-          el.style.cssText = `position:absolute;left:${m.px}px;top:${m.py}px;width:${sz}px;height:${sz}px;margin:${-sz / 2}px 0 0 ${-sz / 2}px;border-radius:50%;background:var(--color-body);box-shadow:0 0 ${sz * 3}px ${sz}px color-mix(in srgb,var(--color-body) 70%,transparent),0 0 ${sz * 8}px ${sz * 2}px color-mix(in srgb,var(--color-body) 25%,transparent)`;
+          // The glow is a radial gradient, not a box-shadow: large blurred shadows are costly to rasterise
+          // when dozens wake in the same few frames.
+          const box = sz * 12;
+          el.style.cssText = `position:absolute;left:${m.px}px;top:${m.py}px;width:${box}px;height:${box}px;margin:${-box / 2}px 0 0 ${-box / 2}px;border-radius:50%;background:radial-gradient(circle,var(--color-body) 0,var(--color-body) ${(sz / 2 / (box / 2)) * 100}%,color-mix(in srgb,var(--color-body) 45%,transparent) ${(sz / (box / 2)) * 100}%,color-mix(in srgb,var(--color-body) 12%,transparent) 45%,transparent 70%)`;
           ring.appendChild(el);
           active++;
           const dx = (Math.random() - 0.5) * 30;
