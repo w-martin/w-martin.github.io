@@ -340,10 +340,13 @@ const nav = [
       // fading on its own (lights still drifting) unless a new toggle forces it away.
       let vt = null;
       const endVt = (force) => {
+        // Held colours go first, and settle with colour transitions still off, or they would fade.
+        vt?.cleanup?.();
+        void document.documentElement.offsetWidth;
         document.documentElement.classList.remove("vt-run");
+        document.documentElement.style.cursor = "";
         lockScroll(false);
         if (!vt) return;
-        vt.cleanup?.();
         vt.style?.remove();
         vt.live?.forEach((el) => (el.style.viewTransitionName = ""));
         if (vt.ring) {
@@ -394,6 +397,30 @@ const nav = [
       // The veil outlives the transition that drew it; fade it out rather than cut it.
       const dismissVeil = (ring) => ring.animate({ opacity: [1, 0] }, { duration: 350, fill: "forwards" }).finished.then(() => ring.remove());
 
+      // While a view transition runs the page behind it is not hit-testable: the toggle's clicks land on
+      // <html>, and so does the hover, which loses its pointer cursor. Catch both and check where the
+      // pointer is, so the toggle can still reverse the change.
+      const overToggle = (e) => {
+        const r = document.getElementById("theme-toggle").getBoundingClientRect();
+        return e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      };
+      addEventListener(
+        "click",
+        (e) => {
+          if (e.target === document.documentElement && vt?.reverse && overToggle(e)) vt.reverse();
+        },
+        true,
+      );
+      addEventListener(
+        "pointermove",
+        (e) => {
+          if (e.target === document.documentElement && vt?.reverse) {
+            document.documentElement.style.cursor = overToggle(e) ? "pointer" : "";
+          }
+        },
+        { passive: true },
+      );
+
       document.getElementById("theme-toggle").addEventListener("click", (e) => {
         const flip = () => {
           const isDark = document.documentElement.classList.toggle("dark");
@@ -417,6 +444,8 @@ const nav = [
         const warm = document.documentElement.classList.contains("dark");
         // Colour transitions would be caught half-way by the snapshot and jump when it ends.
         document.documentElement.classList.add("vt-run");
+        // The pointer is still on the toggle (no move event yet), so keep its hand until one arrives.
+        if (e.detail > 0) document.documentElement.style.cursor = "pointer";
         lockScroll(true);
         const ring = document.createElement("div");
         ring.className = "theme-veil";
@@ -507,10 +536,33 @@ const nav = [
 
         // The page is a frozen snapshot outside the circle. Anything animated gets its own transition
         // layer so it keeps moving, and (like the page) changes theme only where the circle has reached.
-        const live = [...document.querySelectorAll("[data-cover], .scribe, .wyv, .wisp-layer, #site-header")].map((el) =>
-          el.matches("[data-cover]") ? el.parentElement : el,
-        );
+        const live = [document.getElementById("site-header")];
+        // Anything that moves (creatures, the covers' motes and effects) cannot be a frozen snapshot outside
+        // the circle: it would jump to its live state when it reaches it (and back again on a reverse). Each
+        // is its own layer, shown live throughout and held in the old colours until the circle reaches it,
+        // as on touch devices.
+        const wasDark = document.documentElement.classList.contains("dark");
+        const [oldCls, newCls] = wasDark ? ["t-dark", "t-light"] : ["t-light", "t-dark"];
+        const held = [
+          ...document.querySelectorAll(".scribe, .wyv, .wisp-layer"),
+          ...[...document.querySelectorAll("[data-cover]")].map((el) => el.parentElement),
+        ]
+          .map((el) => ({ el, rect: el.getBoundingClientRect(), released: false }))
+          .filter((c) => c.rect.width && c.rect.height)
+          // Measured to the middle, kept on screen: a tall piece centred below the fold must still be reached.
+          .map((c) => ({
+            ...c,
+            d: Math.hypot(
+              Math.min(Math.max(c.rect.left + c.rect.width / 2, 0), innerWidth) - x,
+              Math.min(Math.max(c.rect.top + c.rect.height / 2, 0), innerHeight) - y,
+            ),
+          }));
         let css = "::view-transition-old(root),::view-transition-new(root){animation:none}";
+        held.forEach((c, i) => {
+          c.el.classList.add(oldCls);
+          c.el.style.viewTransitionName = `held-${i}`;
+          css += `::view-transition-old(held-${i}){display:none}::view-transition-new(held-${i}){animation:none}::view-transition-group(held-${i}){animation-duration:0s}`;
+        });
         live.forEach((el, i) => {
           el.style.viewTransitionName = `live-${i}`;
           css += `::view-transition-old(live-${i}){animation:none}::view-transition-new(live-${i}){animation:none}::view-transition-group(live-${i}){animation-duration:0s}`;
@@ -526,7 +578,17 @@ const nav = [
         // offset by where its element sits, or the colour would change out of step with the page.
         const origins = live.map((el) => el.getBoundingClientRect());
         const transition = document.startViewTransition(flip);
-        vt = { transition, live, style, ring };
+        vt = {
+          transition,
+          live,
+          style,
+          ring,
+          cleanup: () =>
+            held.forEach((c) => {
+              c.el.classList.remove(oldCls, newCls);
+              c.el.style.viewTransitionName = "";
+            }),
+        };
         transition.ready.then(() => {
           const clip = { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] };
           const timing = { duration: DURATION, easing: "cubic-bezier(.45,.05,.3,1)", fill: "forwards" };
@@ -550,16 +612,31 @@ const nav = [
             endVt(false);
           };
           vt.reverse = () => [reveal, ...layers].forEach((a) => a.reverse());
+          vt.reversing = () => reveal.playbackRate < 0;
           const watch = () => {
             if (vt?.transition !== transition) return;
             if (reveal.playbackRate < 0 && (reveal.currentTime ?? 0) <= 40) return revert();
+            const outer = radius * (reveal.effect.getComputedTiming().progress ?? 1);
+            for (const c of held) {
+              if (c.released === outer >= c.d) continue;
+              c.released = !c.released;
+              c.el.classList.toggle(oldCls, !c.released);
+              c.el.classList.toggle(newCls, c.released);
+            }
             requestAnimationFrame(watch);
           };
           watch();
           drawVeil(ring, x, y, radius, () => frozen ?? reveal.effect.getComputedTiming().progress ?? 1, () => reveal.playState === "finished", warm);
-        });
+        }, () => {});
         transition.finished.finally(() => {
-          if (vt && vt.transition === transition) endVt(false);
+          if (vt?.transition !== transition) return;
+          // Ended by the browser while running backwards (a click in the last frames, or a skip): the
+          // visitor asked for the old theme, so go there.
+          if (vt.reversing?.()) {
+            flip();
+            dismissVeil(ring);
+          }
+          endVt(false);
         });
       });
 
