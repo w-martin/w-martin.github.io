@@ -379,11 +379,10 @@ const nav = [
         ring.className = "theme-veil";
         ring.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646";
 
-        // No View Transitions, or a touch device (where the full snapshot transition glitched): a disc of
-        // the new paper colour sweeps out from the toggle with the veil on its front, the theme swaps
-        // underneath once it covers the screen, and the disc fades away. One solid layer, so it stays
-        // cheap on a phone, and the change is wiped in rather than snapping.
-        if (!document.startViewTransition || matchMedia("(pointer: coarse)").matches) {
+        // No View Transitions: a disc of the new paper colour sweeps out from the toggle with the veil on
+        // its front, the theme swaps underneath once it covers the screen, and the disc fades away. The
+        // content is hidden meanwhile, so touch devices use the reveal below like everyone else.
+        if (!document.startViewTransition) {
           const toDark = !document.documentElement.classList.contains("dark");
           const disc = document.createElement("div");
           disc.style.cssText = `position:absolute;inset:0;background:${toDark ? "#1e1b18" : "#dfdfdc"};clip-path:circle(0px at ${x}px ${y}px)`;
