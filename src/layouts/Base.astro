@@ -92,7 +92,7 @@ const nav = [
   <body class="min-h-screen flex flex-col bg-paper transition-colors">
     <header id="site-header" class="no-anim sticky top-0 z-[60] border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
-        <a href="/" class="bar-link font-sans font-bold text-black dark:text-white no-underline shrink-0">Will Martin</a>
+        <a href="/" class="bar-link font-sans font-bold text-strong no-underline shrink-0">Will Martin</a>
         <a
           id="now-playing"
           href="#bandcamp-player"
@@ -138,10 +138,10 @@ const nav = [
             aria-label="Toggle dark mode"
             class="flex items-center gap-1.5 font-sans text-sm text-body bar-link cursor-pointer"
           >
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 dark:hidden">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 when-light">
               <path d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.36 6.36l-.71-.71M6.34 6.34l-.71-.71m12.02 0l-.71.71M6.34 17.66l-.71.71M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
             </svg>
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 hidden dark:block">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 when-dark">
               <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
             </svg>
             <span class="nav-label max-sm:hidden transition-[width,opacity] duration-300 overflow-hidden whitespace-nowrap">Theme</span>
@@ -343,6 +343,7 @@ const nav = [
         document.documentElement.classList.remove("vt-run");
         lockScroll(false);
         if (!vt) return;
+        vt.cleanup?.();
         vt.style?.remove();
         vt.live?.forEach((el) => (el.style.viewTransitionName = ""));
         if (vt.ring) {
@@ -351,6 +352,47 @@ const nav = [
         }
         vt = null;
       };
+
+      // Every visible element that carries its own colour (text, a border or background, an image or icon),
+      // nearest to the toggle first. Creatures and blog text count as one piece each, since their colours
+      // are set on the element itself. Elements off screen are not held; they change with the page.
+      const ATOMIC = ".wyv,.scribe,.wisp,.prose";
+      const NOT_THEMED = new Set(["SCRIPT", "STYLE", "TEMPLATE", "NOSCRIPT", "LINK", "META"]);
+      const themedRegions = (x, y) => {
+        const out = [];
+        // Text with no colour of its own inherits the body's, which the flip changes at once; those
+        // elements also pin it (t-body) so they show the token set they are held in.
+        const bodyColor = getComputedStyle(document.body).color;
+        for (const el of document.body.querySelectorAll("*")) {
+          if (NOT_THEMED.has(el.tagName) || el.ownerSVGElement || el.classList.contains("theme-veil")) continue;
+          const r = el.getBoundingClientRect();
+          if (!r.width || !r.height || r.bottom < 0 || r.top > innerHeight || r.right < 0 || r.left > innerWidth) continue;
+          const atomic = el.closest(ATOMIC);
+          if (atomic && atomic !== el) continue;
+          let own = !!atomic || el.childElementCount === 0;
+          if (!own) for (const n of el.childNodes) if (n.nodeType === 3 && n.nodeValue.trim()) own = true;
+          if (!own) {
+            const cs = getComputedStyle(el);
+            own =
+              cs.backgroundImage !== "none" ||
+              cs.backgroundColor !== "rgba(0, 0, 0, 0)" ||
+              cs.borderTopWidth !== "0px" ||
+              cs.borderBottomWidth !== "0px" ||
+              cs.borderLeftWidth !== "0px" ||
+              cs.borderRightWidth !== "0px";
+          }
+          if (!own && !(el instanceof SVGElement)) continue;
+          // Large pieces change when the edge first touches them; the rest when it reaches their middle.
+          const large = r.width > 600 || r.height > 400;
+          const px = large ? Math.min(Math.max(x, r.left), r.right) : r.left + r.width / 2;
+          const py = large ? Math.min(Math.max(y, r.top), r.bottom) : r.top + r.height / 2;
+          out.push({ el, d: Math.hypot(px - x, py - y), body: getComputedStyle(el).color === bodyColor });
+        }
+        return out.sort((a, b) => a.d - b.d);
+      };
+
+      // The veil outlives the transition that drew it; fade it out rather than cut it.
+      const dismissVeil = (ring) => ring.animate({ opacity: [1, 0] }, { duration: 350, fill: "forwards" }).finished.then(() => ring.remove());
 
       document.getElementById("theme-toggle").addEventListener("click", (e) => {
         const flip = () => {
@@ -361,7 +403,8 @@ const nav = [
           document.querySelector('meta[name="color-scheme"]').content = isDark ? "dark" : "only light";
         };
         if (document.documentElement.dataset.motion === "calm") return flip();
-        vt?.doFlip?.();
+        // A click while the change is playing runs it backwards, from the same point.
+        if (vt?.reverse) return vt.reverse();
         if (vt) vt.transition?.skipTransition?.();
         endVt(true);
         document.querySelectorAll(".theme-veil").forEach((n) => n.remove());
@@ -379,41 +422,86 @@ const nav = [
         ring.className = "theme-veil";
         ring.style.cssText = "position:fixed;inset:0;pointer-events:none;z-index:2147483646";
 
-        // No View Transitions: a disc of the new paper colour sweeps out from the toggle with the veil on
-        // its front, the theme swaps underneath once it covers the screen, and the disc fades away. The
-        // content is hidden meanwhile, so touch devices use the reveal below like everyone else.
-        if (!document.startViewTransition) {
-          const toDark = !document.documentElement.classList.contains("dark");
-          const disc = document.createElement("div");
-          disc.style.cssText = `position:absolute;inset:0;background:${toDark ? "#1e1b18" : "#dfdfdc"};clip-path:circle(0px at ${x}px ${y}px)`;
-          ring.appendChild(disc);
+        // No View Transitions, or a touch device (the full-page snapshot glitched there): no snapshot at
+        // all. The theme flips at once, but every visible element is held in the old colours (its own
+        // token class) and released as the circle reaches it, so text and creatures change where the edge
+        // passes, as in the View Transition version. Only the paper is a layer: the old one underneath,
+        // the new one growing over it, both behind the content.
+        if (!document.startViewTransition || matchMedia("(pointer: coarse)").matches) {
+          const wasDark = document.documentElement.classList.contains("dark");
+          const oldCls = wasDark ? "t-dark" : "t-light";
+          const newCls = wasDark ? "t-light" : "t-dark";
+          const regions = themedRegions(x, y);
+          const paper = (cls) => {
+            const d = document.createElement("div");
+            d.className = cls;
+            d.style.cssText = `position:fixed;inset:0;z-index:-1;pointer-events:none;background:var(--color-paper) var(--paper-grain) 0 ${-scrollY}px/var(--paper-size)`;
+            return d;
+          };
+          const under = paper(oldCls);
+          const over = paper(newCls);
+          over.style.clipPath = `circle(0px at ${x}px ${y}px)`;
+          for (const r of regions) r.el.classList.add(oldCls, ...(r.body ? ["t-body"] : []));
+          document.documentElement.classList.add("tw-run");
+          document.body.prepend(under, over);
+          flip();
           document.body.appendChild(ring);
-          let flipped = false;
-          const doFlip = () => {
-            if (flipped) return;
-            flipped = true;
-            flip();
+
+          const release = (r) => {
+            r.el.classList.remove(oldCls);
+            r.el.classList.add(newCls);
           };
-          vt = { ring, doFlip };
-          const t0 = performance.now();
-          const prog = () => {
-            const t = Math.min(1, (performance.now() - t0) / DURATION);
-            return t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t);
+          const cleanup = () => {
+            for (const r of regions) r.el.classList.remove(oldCls, newCls, "t-body");
+            under.remove();
+            over.remove();
+            document.documentElement.classList.remove("tw-run");
           };
-          const FADE = 500;
-          const sweep = () => {
-            if (!ring.isConnected) return;
+          const hold = (r) => {
+            r.el.classList.remove(newCls);
+            r.el.classList.add(oldCls);
+          };
+          // t is the position along the change (0 = old theme, 1 = new); a click flips the direction.
+          let t = 0;
+          let dir = 1;
+          let last = performance.now();
+          const prog = () => (t < 0.5 ? 2 * t * t : 1 - 2 * (1 - t) * (1 - t));
+          vt = {
+            ring,
+            cleanup,
+            reverse: () => {
+              dir = -dir;
+            },
+          };
+          let next = 0;
+          const sweep = (now) => {
+            if (!ring.isConnected || !over.isConnected) return;
+            t = Math.min(1, t + (dir * Math.max(0, now - last)) / DURATION);
+            last = now;
             const p = prog();
-            disc.style.clipPath = `circle(${radius * p}px at ${x}px ${y}px)`;
-            if (p < 1) return requestAnimationFrame(sweep);
-            doFlip();
-            disc.animate([{ opacity: 1 }, { opacity: 0 }], { duration: FADE, easing: "ease-out", fill: "forwards" });
-          };
-          sweep();
-          drawVeil(ring, x, y, radius, prog, () => performance.now() - t0 >= DURATION + FADE, warm);
-          setTimeout(() => {
+            const outer = radius * p;
+            over.style.clipPath = `circle(${outer}px at ${x}px ${y}px)`;
+            while (next < regions.length && (p >= 1 || regions[next].d <= outer)) release(regions[next++]);
+            while (next > 0 && regions[next - 1].d > outer) hold(regions[--next]);
+            if (dir < 0 && t <= 0) {
+              flip();
+              void document.documentElement.offsetWidth; // settle the colours before transitions come back
+              dismissVeil(ring);
+              cleanup();
+              return endVt(false);
+            }
+            if (t < 1) return requestAnimationFrame(sweep);
             if (vt && vt.ring === ring) endVt(false);
-          }, DURATION + FADE + 100);
+          };
+          sweep(last);
+          drawVeil(ring, x, y, radius, prog, () => t >= 1, warm);
+          // rAF stalls in background tabs and some in-app browsers; don't leave the page held.
+          const guard = () => {
+            if (!vt || vt.ring !== ring) return;
+            if (performance.now() - last > 1000) return endVt(false);
+            setTimeout(guard, 1000);
+          };
+          setTimeout(guard, 1000);
           return;
         }
 
@@ -443,13 +531,32 @@ const nav = [
           const clip = { clipPath: [`circle(0px at ${x}px ${y}px)`, `circle(${radius}px at ${x}px ${y}px)`] };
           const timing = { duration: DURATION, easing: "cubic-bezier(.45,.05,.3,1)", fill: "forwards" };
           const reveal = document.documentElement.animate(clip, { ...timing, pseudoElement: "::view-transition-new(root)" });
-          live.forEach((_, i) =>
+          const layers = live.map((_, i) =>
             document.documentElement.animate(
               { clipPath: [`circle(0px at ${x - origins[i].left}px ${y - origins[i].top}px)`, `circle(${radius}px at ${x - origins[i].left}px ${y - origins[i].top}px)`] },
               { ...timing, pseudoElement: `::view-transition-new(live-${i})` },
             ),
           );
-          drawVeil(ring, x, y, radius, () => reveal.effect.getComputedTiming().progress ?? 1, () => reveal.playState === "finished", warm);
+          if (vt?.transition !== transition) return;
+          let frozen = null;
+          // Run back to the old theme. Stopping a frame short of 0 matters: once the animations finish the
+          // browser ends the transition on its own and the new theme would flash up before we flip back.
+          const revert = () => {
+            frozen = 0;
+            flip();
+            void document.documentElement.offsetWidth; // settle the colours before transitions come back
+            transition.skipTransition();
+            dismissVeil(ring);
+            endVt(false);
+          };
+          vt.reverse = () => [reveal, ...layers].forEach((a) => a.reverse());
+          const watch = () => {
+            if (vt?.transition !== transition) return;
+            if (reveal.playbackRate < 0 && (reveal.currentTime ?? 0) <= 40) return revert();
+            requestAnimationFrame(watch);
+          };
+          watch();
+          drawVeil(ring, x, y, radius, () => frozen ?? reveal.effect.getComputedTiming().progress ?? 1, () => reveal.playState === "finished", warm);
         });
         transition.finished.finally(() => {
           if (vt && vt.transition === transition) endVt(false);

@@ -62,6 +62,9 @@
   --color-bar: #dfdfdc;
   --color-body: #454545;
   --color-rule: #b3b3af;
+  --color-strong: #000;
+  --color-chip: rgb(255 255 255 / 0.9);
+  --color-hoverwash: rgb(0 0 0 / 0.03);
   --font-serif: "Merriweather", "Merriweather Fallback", ui-serif, Georgia, serif;
   --font-sans: "Open Sans", "Open Sans Fallback", ui-sans-serif, system-ui, sans-serif;
 }
@@ -74,9 +77,13 @@
 :root {
   --paper-grain: url("../assets/paper-light.webp");
   --paper-size: 160px;
+  --show-light: block;
+  --show-dark: none;
+  --bubble-tint: var(--color-wash);
 }
 
-.dark {
+.dark,
+.t-dark {
   /* The dark counterpart: a warm charcoal base with a faint light speckle, under a darker title bar. */
   --paper-size: auto;
   --paper-grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' seed='4' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 1 0 0 0 0 .96 0 0 0 0 .9 .2 0 0 0 -.06'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
@@ -87,6 +94,69 @@
   --color-bar: #131110;
   --color-body: #dcd6cc;
   --color-rule: #3b362f;
+  --color-strong: #fff;
+  --color-chip: rgb(23 23 23 / 0.8);
+  --color-hoverwash: rgb(255 255 255 / 0.06);
+  --show-light: none;
+  --show-dark: block;
+  --bubble-tint: var(--color-body);
+}
+
+/* The light token set again as a class. Theme changes on touch devices hold the old colours on each element
+   (.t-old) and release them (.t-new) as the reveal reaches it; custom properties inherit from the nearest
+   ancestor, so every element follows whichever set it, or its closest parent, carries. */
+.t-light {
+  --paper-grain: url("../assets/paper-light.webp");
+  --paper-size: 160px;
+  --color-accent: #104f85;
+  --color-paper: #dfdfdc;
+  --color-ink: #1d1b18;
+  --color-wash: #a9824a;
+  --color-bar: #dfdfdc;
+  --color-body: #454545;
+  --color-rule: #b3b3af;
+  --color-strong: #000;
+  --color-chip: rgb(255 255 255 / 0.9);
+  --color-hoverwash: rgb(0 0 0 / 0.03);
+  --show-light: block;
+  --show-dark: none;
+  --bubble-tint: var(--color-wash);
+}
+
+/* Held text that would otherwise inherit the body's colour (already the new theme's) shows its own set. */
+.t-body {
+  color: var(--color-body);
+}
+
+.when-light {
+  display: var(--show-light);
+}
+
+.when-dark {
+  display: var(--show-dark);
+}
+
+/* Blog text inverts in dark mode; keyed to the post's own theme class so a reveal can hold either. */
+.dark .prose:not(.t-light),
+.prose.t-dark {
+  --tw-prose-body: var(--tw-prose-invert-body);
+  --tw-prose-headings: var(--tw-prose-invert-headings);
+  --tw-prose-lead: var(--tw-prose-invert-lead);
+  --tw-prose-links: var(--tw-prose-invert-links);
+  --tw-prose-bold: var(--tw-prose-invert-bold);
+  --tw-prose-counters: var(--tw-prose-invert-counters);
+  --tw-prose-bullets: var(--tw-prose-invert-bullets);
+  --tw-prose-hr: var(--tw-prose-invert-hr);
+  --tw-prose-quotes: var(--tw-prose-invert-quotes);
+  --tw-prose-quote-borders: var(--tw-prose-invert-quote-borders);
+  --tw-prose-captions: var(--tw-prose-invert-captions);
+  --tw-prose-kbd: var(--tw-prose-invert-kbd);
+  --tw-prose-kbd-shadows: var(--tw-prose-invert-kbd-shadows);
+  --tw-prose-code: var(--tw-prose-invert-code);
+  --tw-prose-pre-code: var(--tw-prose-invert-pre-code);
+  --tw-prose-pre-bg: var(--tw-prose-invert-pre-bg);
+  --tw-prose-th-borders: var(--tw-prose-invert-th-borders);
+  --tw-prose-td-borders: var(--tw-prose-invert-td-borders);
 }
 
 /* Declares which scheme the page renders in so Samsung Internet / Chrome forced
@@ -224,6 +294,11 @@ html[data-motion="calm"] .motion-off {
 ::view-transition-new(ring),
 ::view-transition-group(ring) {
   animation: none;
+}
+
+/* The per-element theme change paints the paper itself, in two layers behind the content. */
+html.tw-run body {
+  background: none !important;
 }
 
 /* While the theme change plays, no colour transitions: the snapshot would catch them half-way and the

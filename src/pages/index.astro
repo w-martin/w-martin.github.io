@@ -92,7 +92,7 @@ const posts = await Promise.all(
 
 <Base title="Home">
   <!-- First-draft copy -- edit freely. -->
-  <h1 class="font-sans text-3xl font-bold text-black dark:text-white mb-3">Music, tools and machine learning.</h1>
+  <h1 class="font-sans text-3xl font-bold text-strong mb-3">Music, tools and machine learning.</h1>
 
   <p class="mb-6">
     This page collects what I make: software, music, and the odd blog post.
@@ -106,12 +106,12 @@ const posts = await Promise.all(
   </ul>
 
   <details id="software" class="scroll-mt-8 mb-16" open>
-    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Software</summary>
+    <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Software</summary>
     <p class="mb-6 mt-4">Independent research and open-source tooling in Rust and Python.</p>
     <div class="flex flex-col gap-8">
       {software.map((p) => (
         <article>
-          <h3 class="font-sans text-lg font-bold text-black dark:text-white mb-2">{p.name}</h3>
+          <h3 class="font-sans text-lg font-bold text-strong mb-2">{p.name}</h3>
           <p class="mb-3">{p.blurb}</p>
           <ul class="flex gap-4 font-sans text-sm">
             {p.links.map((l) => (
@@ -124,7 +124,7 @@ const posts = await Promise.all(
   </details>
 
   <details id="music" class="scroll-mt-8 mb-16" open>
-    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Music</summary>
+    <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Music</summary>
     <p class="mb-4 mt-4">
       Away from the keyboard, I write and record instrumental guitar music, self-released.
     </p>
@@ -204,12 +204,12 @@ const posts = await Promise.all(
               class="bandcamp-trigger absolute inset-0 mb-3 flex items-center justify-center cursor-pointer"
               aria-label={`Play ${cover.title} on Bandcamp`}
             >
-              <span class="w-14 h-14 rounded-full bg-white/90 dark:bg-neutral-900/80 flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
-                <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-black dark:text-white" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
+              <span class="w-14 h-14 rounded-full bg-chip flex items-center justify-center shadow-lg transition-transform group-hover:scale-110">
+                <svg viewBox="0 0 24 24" class="w-5 h-5 ml-0.5 text-strong" fill="currentColor"><path d="M8 5v14l11-7z" /></svg>
               </span>
             </button>
           </div>
-          <p class="font-sans font-bold text-black dark:text-white">{cover.title}</p>
+          <p class="font-sans font-bold text-strong">{cover.title}</p>
         </article>
       ))}
     </div>
@@ -640,16 +640,16 @@ const posts = await Promise.all(
   </script>
 
   <details id="blog" class="scroll-mt-8" open>
-    <summary class="font-sans text-2xl font-bold text-black dark:text-white mb-2 pb-2 border-b border-rule cursor-pointer">Blog</summary>
+    <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Blog</summary>
     {posts.length === 0 ? (
       <p class="mt-4">Nothing published yet. Check back soon.</p>
     ) : (
       <div class="flex flex-col gap-4 mt-4">
         {posts.map(({ post, Content }) => (
           <details id={`post-${post.id}`} class="group scroll-mt-8 border-b border-rule pb-4 last:border-0">
-            <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start gap-4 -mx-3 px-3 py-3 rounded-lg hover:bg-black/[0.03] dark:hover:bg-white/[0.06] transition-colors">
+            <summary class="cursor-pointer list-none [&::-webkit-details-marker]:hidden flex items-start gap-4 -mx-3 px-3 py-3 rounded-lg hover:bg-hoverwash transition-colors">
               <div class="flex-1 min-w-0">
-                <span class="font-sans font-bold text-black dark:text-white">{post.data.title}</span>
+                <span class="font-sans font-bold text-strong">{post.data.title}</span>
                 <p class="font-sans text-sm text-body mt-1">
                   {post.data.date.toLocaleDateString("en-GB", { year: "numeric", month: "long", day: "numeric" })}
                 </p>
@@ -661,8 +661,8 @@ const posts = await Promise.all(
                 <div class="post-thumb hidden sm:block relative w-16 h-20 flex-shrink-0 overflow-hidden rounded-[3px]">
                   {thumbOf(post.id, "light") && (
                     <>
-                      <Image src={thumbOf(post.id, "light")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover dark:hidden" />
-                      <Image src={thumbOf(post.id, "dark")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover hidden dark:block" />
+                      <Image src={thumbOf(post.id, "light")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover when-light" />
+                      <Image src={thumbOf(post.id, "dark")} alt="" aria-hidden="true" width={128} height={160} class="w-full h-full object-cover when-dark" />
                     </>
                   )}
                 </div>
@@ -674,7 +674,7 @@ const posts = await Promise.all(
                 </svg>
               </div>
             </summary>
-            <div class="prose prose-neutral dark:prose-invert max-w-none prose-headings:font-sans mt-4 px-3">
+            <div class="prose prose-neutral max-w-none prose-headings:font-sans mt-4 px-3">
               <Content />
             </div>
           </details>

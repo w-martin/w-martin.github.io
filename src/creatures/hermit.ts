@@ -49,8 +49,7 @@ const CSS = `
 .scribe .wand{display:none;position:absolute;left:19px;top:12px;transform-origin:0 100%}
 .scribe.casting .wand{display:block;animation:sc-wand .7s ease-out forwards}
 .scribe .wspark{opacity:0;animation:sc-spark .7s ease-out forwards}
-.scribe{--bub:var(--color-wash)}
-.dark .scribe{--bub:var(--color-body)}
+.scribe{--bub:var(--bubble-tint)}
 .scribe .bubble{display:none;position:absolute;left:-26px;top:-21px;width:80px;height:80px;border-radius:50%;pointer-events:none;
   border:1.3px solid color-mix(in srgb,var(--color-body) 75%,transparent);
   background:radial-gradient(circle at 30% 26%,rgba(255,255,255,.4) 0 7%,transparent 22%),color-mix(in srgb,var(--bub) 9%,transparent);
