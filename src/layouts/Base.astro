@@ -260,20 +260,35 @@ const nav = [
       // warm: the dawn version, used going to the light theme (golden mist and glow).
       const drawVeil = (ring, x, y, radius, progress, done, warm) => {
         const [cr, cg, cb] = warm ? [255, 170, 55] : [150, 175, 255];
-        // fog: rolls in just ahead of the reveal edge and fades away as it reaches the page edges
-        const mist = document.createElement("div");
-        mist.style.cssText = "position:absolute;inset:0;overflow:hidden";
-        const fog = document.createElement("div");
-        fog.style.cssText = `position:absolute;inset:-320px;background-image:${fogTile(warm)};background-size:900px 600px`;
-        mist.appendChild(fog);
-        fog.animate([{ transform: "translate(0,0)" }, { transform: "translate(-320px,-70px)" }], { duration: 2600, easing: "linear", fill: "forwards" });
-        // a cool glow along the very front of the reveal
-        const rim = document.createElement("div");
-        rim.style.cssText = "position:absolute;inset:0";
-        ring.append(mist, rim);
+        const coarse = matchMedia("(pointer: coarse)").matches;
+        let mist, rim, front;
+        if (coarse) {
+          // On phones the front is one disc, painted once and then only scaled and faded: rewriting a mask and
+          // gradients over a full-screen noise layer every frame repaints the whole screen and flickers.
+          const half = radius + 150;
+          const [mr, mg, mb] = warm ? [255, 200, 107] : [179, 204, 255];
+          front = document.createElement("div");
+          front.style.cssText =
+            `position:absolute;left:${x - half}px;top:${y - half}px;width:${half * 2}px;height:${half * 2}px;will-change:transform,opacity;transform:scale(0);` +
+            `background:radial-gradient(circle,transparent ${radius - 600}px,rgba(${mr},${mg},${mb},.22) ${radius - 300}px,rgba(${mr},${mg},${mb},.22) ${radius - 46}px,` +
+            `rgba(${cr},${cg},${cb},.55) ${radius - 5}px,rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${cb},.22) ${radius + 3}px,transparent ${radius + 16}px)`;
+          ring.appendChild(front);
+        } else {
+          // fog: rolls in just ahead of the reveal edge and fades away as it reaches the page edges
+          mist = document.createElement("div");
+          mist.style.cssText = "position:absolute;inset:0;overflow:hidden";
+          const fog = document.createElement("div");
+          fog.style.cssText = `position:absolute;inset:-320px;background-image:${fogTile(warm)};background-size:900px 600px`;
+          mist.appendChild(fog);
+          fog.animate([{ transform: "translate(0,0)" }, { transform: "translate(-320px,-70px)" }], { duration: 2600, easing: "linear", fill: "forwards" });
+          // a cool glow along the very front of the reveal
+          rim = document.createElement("div");
+          rim.style.cssText = "position:absolute;inset:0";
+          ring.append(mist, rim);
+        }
 
         // fae lights: scattered around the toggle; each wakes when the front reaches it
-        const motes = Array.from({ length: matchMedia("(pointer: coarse)").matches ? 28 : 70 }, () => {
+        const motes = Array.from({ length: coarse ? 28 : 70 }, () => {
           const d = Math.sqrt(Math.random()) * radius * 0.92;
           const a = Math.random() * 6.283;
           return { d, px: x + Math.cos(a) * d, py: y + Math.sin(a) * d, size: 2 + Math.random() * 3.2, born: false };
@@ -310,12 +325,17 @@ const nav = [
           if (!ring.isConnected) return;
           const p = progress();
           const outer = radius * p;
-          const grad = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 600}px, #000 ${outer - 300}px, #000 ${outer - 20}px, transparent ${outer + 150}px)`;
-          mist.style.webkitMaskImage = grad;
-          mist.style.maskImage = grad;
-          mist.style.opacity = String((warm ? 0.65 : 0.5) * Math.min(1, (1 - p) / 0.35));
-          const rimA = 0.55 * Math.min(1, (1 - p) / 0.25);
-          rim.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 46}px, rgba(${cr},${cg},${cb},${rimA}) ${outer - 5}px, rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${Math.min(255, cb + 0)},${rimA * 0.4}) ${outer + 3}px, transparent ${outer + 16}px)`;
+          if (front) {
+            front.style.transform = `scale(${p})`;
+            front.style.opacity = String(Math.min(1, (1 - p) / 0.3));
+          } else {
+            const grad = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 600}px, #000 ${outer - 300}px, #000 ${outer - 20}px, transparent ${outer + 150}px)`;
+            mist.style.webkitMaskImage = grad;
+            mist.style.maskImage = grad;
+            mist.style.opacity = String((warm ? 0.65 : 0.5) * Math.min(1, (1 - p) / 0.35));
+            const rimA = 0.55 * Math.min(1, (1 - p) / 0.25);
+            rim.style.background = `radial-gradient(circle at ${x}px ${y}px, transparent ${outer - 46}px, rgba(${cr},${cg},${cb},${rimA}) ${outer - 5}px, rgba(${Math.min(255, cr + 40)},${Math.min(255, cg + 30)},${Math.min(255, cb + 0)},${rimA * 0.4}) ${outer + 3}px, transparent ${outer + 16}px)`;
+          }
           // they wake just ahead of the edge, so each is already glowing as the front reaches it
           for (const m of motes) if (!m.born && outer >= m.d - 150) wake(m);
           if (done() && active === 0) return ring.remove();
