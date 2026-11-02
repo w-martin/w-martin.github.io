@@ -1,5 +1,6 @@
 ---
 import "../styles/global.css";
+import Backdrop from "../components/Backdrop.astro";
 import merriweatherRegular from "../assets/fonts/merriweather-400.woff2?url";
 import openSans from "../assets/fonts/opensans-variable.woff2?url";
 
@@ -42,6 +43,11 @@ const nav = [
     href: "/#blog",
     label: "Blog",
     icon: "M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z",
+  },
+  {
+    href: "/#publications",
+    label: "Publications",
+    icon: "M4 19.5A2.5 2.5 0 016.5 17H20M4 19.5A2.5 2.5 0 006.5 22H20V2H6.5A2.5 2.5 0 004 4.5v15z",
   },
 ];
 ---
@@ -89,7 +95,8 @@ const nav = [
       })();
     </script>
   </head>
-  <body class="min-h-screen flex flex-col bg-paper transition-colors">
+  <body class="min-h-screen flex flex-col transition-colors">
+    <Backdrop />
     <header id="site-header" class="no-anim sticky top-0 z-[60] border-b border-rule bg-bar/90 backdrop-blur transition-colors duration-300">
       <nav id="site-nav" class="max-w-3xl mx-auto flex items-center justify-between gap-3 sm:gap-4 px-4 py-4 transition-[padding] duration-300">
         <a href="/" class="bar-link font-sans font-bold text-strong no-underline shrink-0">Will Martin</a>

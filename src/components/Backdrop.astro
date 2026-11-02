@@ -1,0 +1,186 @@
+---
+// Faint misty backdrop behind the page. Pure CSS fog with scroll parallax; an optional pre-rendered
+// grayscale loop (no alpha, so it works on iOS) is blended in. Without `src` it is fog only.
+interface Props {
+  src?: string;
+  poster?: string;
+  // Seconds between footfalls in the clip, for the ground tremor.
+  period?: number;
+}
+const { src, poster, period = 8 } = Astro.props;
+---
+
+<div id="backdrop" aria-hidden="true" data-src={src} style={`--footfall:${period}s`}>
+  <div class="bd-layer bd-far"></div>
+  <div class="bd-layer bd-mid"></div>
+  <div class="bd-layer bd-near"></div>
+  {src && <video class="bd-video" muted loop playsinline preload="none" poster={poster} tabindex="-1" disablepictureinpicture></video>}
+</div>
+
+<style is:global>
+  /* Neutral grey mist: multiplied onto the light paper and screened onto the dark one, so it never
+     veils the page the way an alpha-faded painting did. */
+  #backdrop {
+    --bd-fog: 0.55;
+    --bd-video: 0.07;
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    overflow: hidden;
+    pointer-events: none;
+  }
+
+  .bd-layer,
+  .bd-video {
+    mix-blend-mode: multiply;
+  }
+
+  html.dark .bd-layer,
+  html.dark .bd-video {
+    mix-blend-mode: screen;
+  }
+
+  .bd-layer {
+    --mist: 120 120 120;
+    position: absolute;
+    inset: -30% -10%;
+    opacity: var(--bd-fog);
+    animation: bd-drift var(--drift) ease-in-out infinite alternate;
+  }
+
+  html.dark .bd-layer {
+    --mist: 150 150 150;
+  }
+
+  .bd-far {
+    --drift: 70s;
+    --par: 8vh;
+    opacity: calc(var(--bd-fog) * 0.6);
+    background:
+      radial-gradient(60% 28% at 22% 38%, rgb(var(--mist) / 0.5), transparent 70%),
+      radial-gradient(55% 24% at 78% 30%, rgb(var(--mist) / 0.4), transparent 70%);
+  }
+
+  .bd-mid {
+    --drift: 52s;
+    --par: 15vh;
+    background:
+      radial-gradient(70% 26% at 60% 62%, rgb(var(--mist) / 0.5), transparent 70%),
+      radial-gradient(50% 22% at 15% 70%, rgb(var(--mist) / 0.4), transparent 70%);
+  }
+
+  .bd-near {
+    --drift: 40s;
+    --par: 25vh;
+    background: linear-gradient(to top, rgb(var(--mist) / 0.55), transparent 38%);
+  }
+
+  .bd-video {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    opacity: 0;
+    transition: opacity 2s ease-out;
+  }
+
+  #backdrop[data-playing] .bd-video {
+    opacity: var(--bd-video);
+  }
+
+  /* The poster is the still fallback: shown while the clip is off or blocked. */
+  #backdrop[data-poster] .bd-video {
+    opacity: var(--bd-video);
+  }
+
+  #backdrop[data-playing] {
+    animation: bd-step var(--footfall) ease-in-out infinite;
+  }
+
+  @keyframes bd-drift {
+    from {
+      transform: translate3d(-6%, 0, 0);
+    }
+    to {
+      transform: translate3d(6%, 0, 0);
+    }
+  }
+
+  @keyframes bd-par {
+    to {
+      translate: 0 calc(var(--par) * -1);
+    }
+  }
+
+  /* A distant footfall: well under a pixel, so it is felt rather than seen. */
+  @keyframes bd-step {
+    0%,
+    10%,
+    100% {
+      translate: 0 0;
+    }
+    3% {
+      translate: 0 0.6px;
+    }
+  }
+
+  html[data-motion="calm"] #backdrop,
+  html[data-motion="calm"] .bd-layer {
+    animation: none !important;
+  }
+</style>
+
+<style is:global>
+  /* animation-timeline sits in its own rule: the `animation` shorthand resets it. */
+  @supports (animation-timeline: scroll()) {
+    .bd-layer {
+      animation: bd-drift var(--drift) ease-in-out infinite alternate, bd-par linear both;
+    }
+
+    .bd-layer {
+      animation-timeline: auto, scroll(root);
+    }
+  }
+</style>
+
+<script>
+  const root = document.getElementById("backdrop");
+  const video = root?.querySelector<HTMLVideoElement>(".bd-video");
+  const src = root?.dataset.src;
+
+  if (root && video && src) {
+    const html = document.documentElement;
+    const calm = () => html.dataset.motion === "calm";
+    const saveData = () => (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData === true;
+    let loaded = false;
+
+    const start = async () => {
+      if (calm() || saveData() || document.hidden) return;
+      if (!loaded) {
+        video.src = src;
+        loaded = true;
+      }
+      try {
+        await video.play();
+        root.dataset.playing = "";
+      } catch {
+        // Autoplay blocked (e.g. Low Power Mode): the poster stays as the still.
+      }
+    };
+
+    const stop = () => {
+      video.pause();
+      delete root.dataset.playing;
+    };
+
+    if (video.poster) root.dataset.poster = "";
+
+    const kickoff = () => ("requestIdleCallback" in window ? requestIdleCallback(start) : setTimeout(start, 1500));
+    if (document.readyState === "complete") kickoff();
+    else addEventListener("load", kickoff, { once: true });
+
+    document.addEventListener("visibilitychange", () => (document.hidden ? stop() : start()));
+    new MutationObserver(() => (calm() ? stop() : start())).observe(html, { attributes: true, attributeFilter: ["data-motion"] });
+  }
+</script>

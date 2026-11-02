@@ -76,6 +76,24 @@ const software = [
   },
 ];
 
+// From the Google Scholar profile. Links are DOIs where Crossref has an exact title match, otherwise a Scholar title search.
+// Venues Scholar truncates are given as far as it shows them.
+const publications = [
+  { title: "Deep neural networks for appliance transient classification", href: "https://doi.org/10.1109/icassp.2019.8682658", venue: "ICASSP 2019", year: 2019 },
+  { title: "A survey of app store analysis for software engineering", href: "https://doi.org/10.1109/tse.2016.2630689", venue: "IEEE Transactions on Software Engineering 43(9)", year: 2017, first: true },
+  { title: "Investigating the relationship between price, rating, and popularity in the Blackberry World App Store", href: "https://doi.org/10.1016/j.infsof.2017.03.002", venue: "Information and Software Technology 87", year: 2017 },
+  { title: "App store analysis for software engineering", href: "https://scholar.google.co.uk/scholar?q=%22App+store+analysis+for+software+engineering%22", venue: "PhD thesis, University College London", year: 2017, first: true },
+  { title: "Causal impact analysis for app releases in Google Play", href: "https://doi.org/10.1145/2950290.2950320", venue: "Proc. 24th ACM SIGSOFT International Symposium", year: 2016, first: true },
+  { title: "Mobile app and app store analysis, testing and optimisation", href: "https://doi.org/10.1145/2897073.2897076", venue: "Proc. International Conference on Mobile Software Engineering and Systems", year: 2016 },
+  { title: "Causal impact for app store analysis", href: "https://doi.org/10.1145/2889160.2891033", venue: "Proc. 38th International Conference on Software Engineering", year: 2016, first: true },
+  { title: "The app sampling problem for app store mining", href: "https://doi.org/10.1109/msr.2015.19", venue: "Mining Software Repositories (MSR) 2015", year: 2015, first: true },
+  { title: "Feature lifecycles as they spread, migrate, remain, and die in app stores", href: "https://doi.org/10.1109/re.2015.7320410", venue: "IEEE Requirements Engineering Conference (RE) 2015", year: 2015 },
+  { title: "App store mining and analysis", href: "https://scholar.google.co.uk/scholar?q=%22App+store+mining+and+analysis%22", venue: "Proc. 3rd International Workshop", year: 2015 },
+  { title: "Causal impact analysis applied to app releases in Google Play and Windows Phone Store", href: "https://scholar.google.co.uk/scholar?q=%22Causal+impact+analysis+applied+to+app+releases+in+Google+Play+and+Windows+Phone+Store%22", venue: "UCL Research Note RN/15/07", year: 2015, first: true },
+  { title: "App store analysis: Mining app stores for relationships between customer, business and technical characteristics", href: "https://scholar.google.co.uk/scholar?q=%22App+store+analysis%3A+Mining+app+stores+for+relationships+between+customer%2C+business+and+technical+characteristics%22", venue: "UCL Research Note RN/14/10", year: 2014 },
+  { title: "Life and death in the app store: Theory and analysis of feature migration", href: "https://scholar.google.co.uk/scholar?q=%22Life+and+death+in+the+app+store%3A+Theory+and+analysis+of+feature+migration%22", venue: "UCL Research Note RN/14/12", year: 2014 },
+];
+
 // Pre-rendered by tools/thumbs/make_thumbs.py (light and dark variant per post).
 const thumbs = import.meta.glob<ImageMetadata>("../assets/thumbs/*.webp", { eager: true, import: "default" });
 // Thumbnail filenames carry a content hash (<post>-<theme>-<hash>.webp); find the one for a post.
@@ -92,10 +110,13 @@ const posts = await Promise.all(
 
 <Base title="Home">
   <!-- First-draft copy -- edit freely. -->
-  <h1 class="font-sans text-3xl font-bold text-strong mb-3">Music, tools and machine learning.</h1>
+  <h1 class="font-sans text-3xl font-bold text-strong mb-3">Music and tools for machine learning.</h1>
 
   <p class="mb-6">
-    This page collects what I make: software, music, and the odd blog post.
+    I am an ML engineer. My PhD at UCL mined app stores for evidence about how apps succeed and fail, and I have
+    retained the habit of checking claims against data. Hence, my open-source tools are designed to catch problems in
+    order to prevent them reaching production. This page collects what I make: software, music, and the occasional blog
+    post.
   </p>
 
   <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-16">
@@ -126,7 +147,7 @@ const posts = await Promise.all(
   <details id="music" class="scroll-mt-8 mb-16" open>
     <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Music</summary>
     <p class="mb-4 mt-4">
-      Away from the keyboard, I write and record instrumental guitar music, self-released.
+      Away from the keyboard, I write and record instrumental guitar music.
     </p>
 
     <ul class="flex flex-wrap gap-x-6 gap-y-2 font-sans text-sm mb-8">
@@ -639,7 +660,7 @@ const posts = await Promise.all(
     lazy("#software", (el) => import("../creatures/wisp").then((m) => m.mountWisp(el)));
   </script>
 
-  <details id="blog" class="scroll-mt-8" open>
+  <details id="blog" class="scroll-mt-8 mb-16" open>
     <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Blog</summary>
     {posts.length === 0 ? (
       <p class="mt-4">Nothing published yet. Check back soon.</p>
@@ -681,5 +702,35 @@ const posts = await Promise.all(
         ))}
       </div>
     )}
+  </details>
+
+  <details id="publications" class="scroll-mt-8">
+    <summary class="font-sans text-2xl font-bold text-strong mb-2 pb-2 border-b border-rule cursor-pointer">Publications</summary>
+    <p class="mb-6 mt-4">
+      Earlier research, mostly on app store analysis from my PhD at UCL. Full list on
+      <a href="https://scholar.google.co.uk/citations?user=OXYi23sAAAAJ&amp;hl=en" class="link">Google Scholar</a>.
+    </p>
+    <div id="pub-filters" class="flex flex-wrap gap-2 mb-6" role="group" aria-label="Filter publications">
+      <button type="button" class="filter-btn" data-filter="all" aria-pressed="true">All</button>
+      <button type="button" class="filter-btn" data-filter="first" aria-pressed="false">First author</button>
+    </div>
+    <ul class="flex flex-col gap-3">
+      {publications.map((p) => (
+        <li class="pub" data-first={!!p.first}>
+          <a href={p.href} class="link">{p.title}</a>
+          <span class="block font-sans text-sm text-body">{p.venue}, {p.year}</span>
+        </li>
+      ))}
+    </ul>
+    <script>
+      const buttons = [...document.querySelectorAll<HTMLButtonElement>("#pub-filters [data-filter]")];
+      const items = [...document.querySelectorAll<HTMLElement>("#publications .pub")];
+      for (const b of buttons) {
+        b.addEventListener("click", () => {
+          for (const o of buttons) o.setAttribute("aria-pressed", String(o === b));
+          for (const li of items) li.hidden = b.dataset.filter === "first" && li.dataset.first !== "true";
+        });
+      }
+    </script>
   </details>
 </Base>
